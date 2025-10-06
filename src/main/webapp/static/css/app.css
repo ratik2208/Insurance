@@ -1,0 +1,80 @@
+/*
+  HIMS Shared Theme (modern, accessible, interactive)
+  - Vibrant gradient headers
+  - Soothing backgrounds
+  - Glassmorphism cards
+  - Subtle animations and focus states
+*/
+
+:root{
+  --bg-start:#0ea5e9; /* sky-500 */
+  --bg-end:#8b5cf6;   /* violet-500 */
+  --card-bg:rgba(255,255,255,.8);
+  --text:#101828;
+  --muted:#667085;
+  --primary:#4f46e5;  /* indigo-600 */
+  --primary-2:#06b6d4;/* cyan-500 */
+  --success:#16a34a;
+  --danger:#dc2626;
+  --warning:#f59e0b;
+  --radius:14px;
+  --shadow:0 10px 30px rgba(0,0,0,.12);
+  --shadow-2:0 18px 50px rgba(79,70,229,.25);
+}
+
+/* Page background */
+body.theme-gradient{
+  min-height:100vh;
+  background: radial-gradient(1200px 800px at 10% -10%, rgba(14,165,233,.35), transparent 40%),
+              radial-gradient(1000px 700px at 110% 10%, rgba(139,92,246,.35), transparent 45%),
+              linear-gradient(135deg, #eef2ff 0%, #f8fafc 100%);
+}
+
+/* Gradient header bar */
+.app-header{
+  background: linear-gradient(135deg, var(--bg-start), var(--bg-end));
+  color:#fff;
+  box-shadow: var(--shadow);
+}
+
+/* Cards */
+.card{
+  background: var(--card-bg);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  transition: transform .25s ease, box-shadow .25s ease;
+}
+.card:hover{ transform: translateY(-4px); box-shadow: var(--shadow-2); }
+
+/* Buttons */
+.btn{ border-radius: 10px; font-weight:600; transition: transform .15s ease, box-shadow .15s ease; }
+.btn-primary{ background: linear-gradient(135deg, var(--primary), var(--primary-2)); color:#fff; border:none; }
+.btn-primary:hover{ transform: translateY(-2px); box-shadow: var(--shadow-2); }
+.btn-secondary{ background:#fff; border:2px solid var(--primary); color:var(--primary); }
+.btn-secondary:hover{ background:var(--primary); color:#fff; }
+.btn-success{ background: var(--success); color:#fff; border:none; }
+.btn-danger{ background: var(--danger); color:#fff; border:none; }
+
+/* Forms */
+.form-control{ border:2px solid #e5e7eb; background:#fbfbfe; transition:border-color .2s, box-shadow .2s; }
+.form-control:focus{ border-color: var(--primary); box-shadow:0 0 0 4px rgba(79,70,229,.12); outline:0; background:#fff; }
+
+.section-title{ color:var(--primary); letter-spacing: .2px; }
+
+/* Alerts */
+.alert{ border-radius: 12px; }
+.alert.success{ background:#ecfdf5; border:1px solid #d1fae5; color:#065f46; }
+.alert.error{ background:#fef2f2; border:1px solid #fecaca; color:#991b1b; }
+.alert.warning{ background:#fffbeb; border:1px solid #fde68a; color:#92400e; }
+
+/* Utilities */
+.grid-responsive{ display:grid; grid-template-columns: repeat(auto-fit, minmax(280px,1fr)); gap: 24px; }
+.stat-number{ color: var(--primary); }
+
+/* Subtle entrance */
+.fade-in{ animation: fadein .35s ease both; }
+@keyframes fadein{ from{opacity:0; transform:translateY(8px)} to{opacity:1; transform:translateY(0)} }
+
+
