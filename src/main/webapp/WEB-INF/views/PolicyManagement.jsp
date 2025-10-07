@@ -207,7 +207,7 @@
   <div class="header app-header">
     <div class="header-content">
       <h1>Policy Management</h1>
-      <a href="${pageContext.request.contextPath}/admin-dashboard" class="back-btn">← Back to Dashboard</a>
+      <a href="${pageContext.request.contextPath}/agent-dashboard" class="back-btn">← Back to Dashboard</a>
     </div>
   </div>
 
@@ -395,11 +395,11 @@
     });
 
     function viewPolicy(policyNumber) {
-      showAlert(`Viewing policy: ${policyNumber}`, 'success');
+      showAlert('Viewing policy: ' + policyNumber, 'success');
     }
 
     function editPolicy(policyNumber) {
-      showAlert(`Editing policy: ${policyNumber}`, 'success');
+      showAlert('Editing policy: ' + policyNumber, 'success');
     }
 
     function renderPolicies(policies) {
@@ -409,26 +409,25 @@
         grid.innerHTML = '<div>No policies found.</div>';
         return;
       }
-      policies.forEach(p => {
-        const activeClass = p.active ? 'status-active' : 'status-inactive';
-        const activeText = p.active ? 'Active' : 'Inactive';
-        const card = document.createElement('div');
+      policies.forEach(function(p){
+        var activeClass = p.active ? 'status-active' : 'status-inactive';
+        var activeText = p.active ? 'Active' : 'Inactive';
+        var card = document.createElement('div');
         card.className = 'policy-card';
-        card.innerHTML = `
-          <div class="policy-header">
-            <div class="policy-number">${p.policyNumber}</div>
-            <div class="policy-status ${activeClass}">${activeText}</div>
-          </div>
-          <div class="policy-details">
-            <div class="detail-row"><span class="detail-label">Title:</span><span class="detail-value">${p.title || ''}</span></div>
-            <div class="detail-row"><span class="detail-label">Coverage Amount:</span><span class="detail-value">${p.coverageAmount || ''}</span></div>
-            <div class="detail-row"><span class="detail-label">Premium:</span><span class="detail-value">${p.premium || ''}</span></div>
-            <div class="detail-row"><span class="detail-label">Term:</span><span class="detail-value">${p.termMonths || ''} months</span></div>
-          </div>
-          <div class="policy-actions">
-            <button class="btn btn-primary" onclick="viewPolicy(${p.id})">View Details</button>
-          </div>
-        `;
+        card.innerHTML =
+          '<div class="policy-header">' +
+            '<div class="policy-number">' + (p.policyNumber || '') + '</div>' +
+            '<div class="policy-status ' + activeClass + '">' + activeText + '</div>' +
+          '</div>' +
+          '<div class="policy-details">' +
+            '<div class="detail-row"><span class="detail-label">Title:</span><span class="detail-value">' + (p.title || '') + '</span></div>' +
+            '<div class="detail-row"><span class="detail-label">Coverage Amount:</span><span class="detail-value">' + (p.coverageAmount || '') + '</span></div>' +
+            '<div class="detail-row"><span class="detail-label">Premium:</span><span class="detail-value">' + (p.premium || '') + '</span></div>' +
+            '<div class="detail-row"><span class="detail-label">Term:</span><span class="detail-value">' + (p.termMonths || '') + ' months</span></div>' +
+          '</div>' +
+          '<div class="policy-actions">' +
+            '<button class="btn btn-primary" onclick="viewPolicy(' + (p.id || 0) + ')">View Details</button>' +
+          '</div>';
         grid.appendChild(card);
       });
     }

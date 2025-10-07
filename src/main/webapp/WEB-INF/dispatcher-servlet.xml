@@ -32,8 +32,13 @@
         <security:intercept-url pattern="/admin-dashboard" access="permitAll"/>
         <security:intercept-url pattern="/agent-dashboard" access="permitAll"/>
         <security:intercept-url pattern="/customer-dashboard" access="permitAll"/>
+        <!-- Allow JSP view pages to load; actions are protected via APIs below -->
         <security:intercept-url pattern="/policies" access="permitAll"/>
         <security:intercept-url pattern="/claims" access="permitAll"/>
+
+        <!-- Protect business APIs: require authentication so Principal is present -->
+        <security:intercept-url pattern="/policies/**" access="isAuthenticated()"/>
+        <security:intercept-url pattern="/claims/**" access="isAuthenticated()"/>
         <security:intercept-url pattern="/file-claim" access="permitAll"/>
    
         <security:custom-filter ref="jwtFilter" before="FORM_LOGIN_FILTER"/>
@@ -85,7 +90,7 @@
         <property name="driverClassName" value="org.postgresql.Driver" />
         <property name="url" value="jdbc:postgresql://localhost:5432/hims" />
         <property name="username" value="postgres" />
-        <property name="password" value="rootroot" />
+        <property name="password" value="root" />
 
     </bean>
 

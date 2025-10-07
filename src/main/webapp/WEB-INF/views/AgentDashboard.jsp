@@ -206,8 +206,8 @@
           Review and process pending claims. Approve or reject claims based on policy terms and documentation.
         </div>
         <div class="card-actions">
-          <a href="#" class="btn btn-primary" onclick="loadPendingClaims()">Review Claims</a>
-          <a href="#" class="btn btn-secondary" onclick="showClaimHistory()">Claim History</a>
+          <a href="${pageContext.request.contextPath}/claims" class="btn btn-primary">Review Claims</a>
+          <a href="${pageContext.request.contextPath}/claims" class="btn btn-secondary">Claim History</a>
         </div>
       </div>
 
@@ -220,8 +220,8 @@
           Access policy details, coverage information, and eligibility criteria to make informed decisions.
         </div>
         <div class="card-actions">
-          <a href="#" class="btn btn-primary" onclick="loadPolicies()">View Policies</a>
-          <a href="#" class="btn btn-secondary" onclick="searchPolicies()">Search Policies</a>
+          <a href="${pageContext.request.contextPath}/policies-page" class="btn btn-primary">View Policies</a>
+          <a href="${pageContext.request.contextPath}/policies-page" class="btn btn-secondary">Search Policies</a>
         </div>
       </div>
 

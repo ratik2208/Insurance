@@ -73,14 +73,25 @@ public class ClaimServiceImpl implements ClaimService {
     }
 
     @Override
+    @Transactional(readOnly = true)
+    public ClaimDTO getById(Long claimId) {
+        Claim c = claimDao.findById(claimId).orElseThrow(() -> new EntityNotFoundException("Claim not found"));
+        return toDto(c);
+    }
+
+    @Override
     @Transactional
     public ClaimDTO decideClaim(Long claimId, Long agentId, String decision, String remarks) {
         Claim c = claimDao.findById(claimId).orElseThrow(() -> new EntityNotFoundException("Claim not found"));
         User agent = userDao.findById(agentId).orElseThrow(() -> new EntityNotFoundException("Agent not found"));
 
-        // optional: verify agent role
-        if (agent.getRole() != null && !agent.getRole().name().equalsIgnoreCase("AGENT")) {
-            throw new IllegalArgumentException("Only agents can decide claims");
+        // Verify decision authority: allow AGENT and ADMIN to decide claims
+        if (agent.getRole() == null) {
+            throw new IllegalArgumentException("User has no role assigned");
+        }
+        String roleName = agent.getRole().name();
+        if (!("AGENT".equalsIgnoreCase(roleName) || "ADMIN".equalsIgnoreCase(roleName))) {
+            throw new IllegalArgumentException("Only agents or admins can decide claims");
         }
 
         if (!(c.getStatus() == ClaimStatus.FILED || c.getStatus() == ClaimStatus.UNDER_REVIEW)) {

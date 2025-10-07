@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.*;
 import org.springframework.stereotype.Service;
+import javax.persistence.EntityNotFoundException;
 
 import java.util.Collections;
 
@@ -30,8 +31,10 @@ public class CustomUserDetailsService implements UserDetailsService {
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
         if (email != null) email = email.trim();
 
-        User appUser = userService.findByEmail(email); // <-- must throw or return null if not found
-        if (appUser == null) {
+        User appUser;
+        try {
+            appUser = userService.findByEmail(email);
+        } catch (EntityNotFoundException ex) {
             throw new UsernameNotFoundException("User not found with email: " + email);
         }
 

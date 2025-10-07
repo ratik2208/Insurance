@@ -221,7 +221,7 @@
 
     <div class="page-header">
       <h2 class="page-title">Insurance Claims</h2>
-      <button class="btn btn-primary" onclick="showFileClaimModal()">+ File New Claim</button>
+      <button class="btn btn-primary" onclick="openAgentFileClaimModal()">+ File New Claim</button>
     </div>
 
     <div class="search-section">
@@ -310,10 +310,74 @@
     </div>
   </div>
 
+  <!-- View/Decision Modal -->
+  <div id="claimModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,.5); align-items:center; justify-content:center;">
+    <div style="background:#fff; width:600px; max-width:95%; border-radius:12px; box-shadow:0 15px 40px rgba(0,0,0,.2);">
+      <div style="padding:18px 20px; border-bottom:1px solid #eee; display:flex; justify-content:space-between; align-items:center;">
+        <h3 style="margin:0; color:#333;">Claim Details</h3>
+        <button class="btn btn-secondary" onclick="closeClaimModal()">Close</button>
+      </div>
+      <div style="padding:20px;">
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:16px;">
+          <div><strong>Claim #</strong><div id="m_claimNumber"></div></div>
+          <div><strong>Status</strong><div id="m_status"></div></div>
+          <div><strong>Policy Id</strong><div id="m_policyId"></div></div>
+          <div><strong>Customer Id</strong><div id="m_customerId"></div></div>
+          <div><strong>Amount</strong><div id="m_amount"></div></div>
+          <div><strong>Date</strong><div id="m_date"></div></div>
+        </div>
+        <div class="form-group">
+          <label for="m_remarks">Remarks (optional)</label>
+          <textarea id="m_remarks" class="form-control" rows="3" placeholder="Add remarks for approval/rejection"></textarea>
+        </div>
+      </div>
+      <div style="padding:16px 20px; border-top:1px solid #eee; display:flex; gap:10px; justify-content:flex-end;">
+        <button id="m_approveBtn" class="btn btn-success" onclick="modalApprove()">Approve</button>
+        <button id="m_rejectBtn" class="btn btn-danger" onclick="modalReject()">Reject</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Agent File Claim Modal -->
+  <div id="fileClaimModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,.5); align-items:center; justify-content:center;">
+    <div style="background:#fff; width:600px; max-width:95%; border-radius:12px; box-shadow:0 15px 40px rgba(0,0,0,.2);">
+      <div style="padding:18px 20px; border-bottom:1px solid #eee; display:flex; justify-content:space-between; align-items:center;">
+        <h3 style="margin:0; color:#333;">File New Claim</h3>
+        <button class="btn btn-secondary" onclick="closeFileClaimModal()">Close</button>
+      </div>
+      <div style="padding:20px; display:grid; grid-template-columns:1fr 1fr; gap:16px;">
+        <div class="form-group">
+          <label for="fc_customerId">Customer ID</label>
+          <input id="fc_customerId" class="form-control" placeholder="Enter customer ID" />
+        </div>
+        <div class="form-group">
+          <label for="fc_policyId">Policy ID</label>
+          <input id="fc_policyId" class="form-control" placeholder="Enter policy ID" />
+        </div>
+        <div class="form-group">
+          <label for="fc_amount">Amount Claimed</label>
+          <input id="fc_amount" class="form-control" placeholder="e.g., 2500.00" />
+        </div>
+        <div class="form-group" style="grid-column: span 2;">
+          <label for="fc_doc">Supporting Document URL</label>
+          <input id="fc_doc" class="form-control" placeholder="https://..." />
+        </div>
+        <div class="form-group" style="grid-column: span 2;">
+          <label for="fc_remarks">Remarks</label>
+          <textarea id="fc_remarks" class="form-control" rows="3" placeholder="Optional remarks"></textarea>
+        </div>
+      </div>
+      <div style="padding:16px 20px; border-top:1px solid #eee; display:flex; gap:10px; justify-content:flex-end;">
+        <button class="btn btn-primary" onclick="submitFileClaim()">Submit Claim</button>
+      </div>
+    </div>
+  </div>
+
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
   <script>
     const API_BASE_URL = window.APP_CONTEXT || '${pageContext.request.contextPath}';
     let authToken = localStorage.getItem('token');
+    let currentClaimId = null;
 
     function showAlert(message, type) {
       const alertDiv = document.getElementById('alertMessage');
@@ -324,42 +388,110 @@
       setTimeout(() => { alertDiv.style.display = 'none'; }, 5000);
     }
 
-    function showFileClaimModal() {
-      showAlert('File claim feature will be implemented', 'success');
+    function openAgentFileClaimModal() {
+      document.getElementById('fileClaimModal').style.display = 'flex';
+    }
+
+    function closeFileClaimModal() {
+      document.getElementById('fileClaimModal').style.display = 'none';
+      $('#fc_customerId').val('');
+      $('#fc_policyId').val('');
+      $('#fc_amount').val('');
+      $('#fc_doc').val('');
+      $('#fc_remarks').val('');
+    }
+
+    function submitFileClaim() {
+      if (!authToken) { window.location.href = API_BASE_URL + '/login'; return; }
+      var customerId = $('#fc_customerId').val();
+      var payload = {
+        policyId: Number($('#fc_policyId').val()),
+        amountClaimed: $('#fc_amount').val(),
+        supportingDocumentUrl: $('#fc_doc').val(),
+        remarks: $('#fc_remarks').val()
+      };
+      $.ajax({
+        url: API_BASE_URL + '/claims/customer/' + encodeURIComponent(customerId),
+        method: 'POST',
+        data: JSON.stringify(payload),
+        contentType: 'application/json',
+        headers: { 'Authorization': 'Bearer ' + authToken },
+        success: function(){ closeFileClaimModal(); showAlert('Claim filed successfully', 'success'); loadClaims(); },
+        error: function(xhr){ showAlert('Failed to file claim: ' + (xhr.responseText || ''), 'error'); }
+      });
+    }
+
+    function openClaimModal() {
+      document.getElementById('claimModal').style.display = 'flex';
+    }
+
+    function closeClaimModal() {
+      document.getElementById('claimModal').style.display = 'none';
+      currentClaimId = null;
+      $('#m_remarks').val('');
     }
 
     function viewClaim(id) {
-      showAlert('Viewing claim #' + id, 'success');
+      if (!authToken) { window.location.href = API_BASE_URL + '/login'; return; }
+      $.ajax({
+        url: API_BASE_URL + '/claims/' + id,
+        method: 'GET',
+        headers: { 'Authorization': 'Bearer ' + authToken },
+        success: function(c){
+          currentClaimId = c.id;
+          $('#m_claimNumber').text(c.claimNumber || '');
+          $('#m_status').text(c.status || '');
+          $('#m_policyId').text(c.policyId || '');
+          $('#m_customerId').text(c.customerId || '');
+          $('#m_amount').text(c.amountClaimed || '');
+          $('#m_date').text(c.claimDate || '');
+          const actionable = (c.status === 'FILED' || c.status === 'UNDER_REVIEW');
+          $('#m_approveBtn').prop('disabled', !actionable);
+          $('#m_rejectBtn').prop('disabled', !actionable);
+          openClaimModal();
+        },
+        error: function(){ showAlert('Failed to load claim', 'error'); }
+      });
     }
 
-    function approveClaim(id) {
+    function approveClaim(id, remarks) {
       if (!authToken) { window.location.href = API_BASE_URL + '/login'; return; }
       if (confirm('Approve claim #' + id + '?')) {
         $.ajax({
-          url: API_BASE_URL + '/claims/' + id + '/decision?decision=APPROVE',
+          url: API_BASE_URL + '/claims/' + id + '/decision?decision=APPROVE' + (remarks ? ('&remarks=' + encodeURIComponent(remarks)) : ''),
           method: 'PUT',
           headers: { 'Authorization': 'Bearer ' + authToken },
-          success: function(){ showAlert('Claim approved', 'success'); loadClaims(); },
+          success: function(){ closeClaimModal(); showAlert('Claim approved', 'success'); loadClaims(); },
           error: function(){ showAlert('Failed to approve claim', 'error'); }
         });
       }
     }
 
-    function rejectClaim(id) {
+    function rejectClaim(id, remarks) {
       if (!authToken) { window.location.href = API_BASE_URL + '/login'; return; }
       if (confirm('Reject claim #' + id + '?')) {
         $.ajax({
-          url: API_BASE_URL + '/claims/' + id + '/decision?decision=REJECT',
+          url: API_BASE_URL + '/claims/' + id + '/decision?decision=REJECT' + (remarks ? ('&remarks=' + encodeURIComponent(remarks)) : ''),
           method: 'PUT',
           headers: { 'Authorization': 'Bearer ' + authToken },
-          success: function(){ showAlert('Claim rejected', 'success'); loadClaims(); },
+          success: function(){ closeClaimModal(); showAlert('Claim rejected', 'success'); loadClaims(); },
           error: function(){ showAlert('Failed to reject claim', 'error'); }
         });
       }
     }
 
     function processPayment(claimNumber) {
-      showAlert(`Processing payment for claim ${claimNumber}`, 'success');
+      showAlert('Processing payment for claim ' + claimNumber, 'success');
+    }
+
+    function modalApprove() {
+      const remarks = $('#m_remarks').val();
+      approveClaim(currentClaimId, remarks);
+    }
+
+    function modalReject() {
+      const remarks = $('#m_remarks').val();
+      rejectClaim(currentClaimId, remarks);
     }
 
     function renderClaims(claims) {
@@ -374,23 +506,22 @@
         tbody.appendChild(tr);
         return;
       }
-      claims.forEach(c => {
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-          <td>${c.claimNumber}</td>
-          <td>${c.customerId || ''}</td>
-          <td>${c.policyId || ''}</td>
-          <td>${c.amountClaimed || ''}</td>
-          <td><span class="status-badge status-${(c.status || '').toLowerCase().replace('_','-')}">${c.status}</span></td>
-          <td>${c.claimDate || ''}</td>
-          <td>
-            <div class="action-buttons">
-              <button class="btn btn-primary" onclick="viewClaim(${c.id})">View</button>
-              <button class="btn btn-success" onclick="approveClaim(${c.id})">Approve</button>
-              <button class="btn btn-danger" onclick="rejectClaim(${c.id})">Reject</button>
-            </div>
-          </td>
-        `;
+      claims.forEach(function(c) {
+        var tr = document.createElement('tr');
+        var statusClass = (c.status || '').toLowerCase().replace('_','-');
+        var actionButtonsHtml = '<button class="btn btn-primary" onclick="viewClaim(' + c.id + ')">View</button>';
+        if (c.status === 'FILED' || c.status === 'UNDER_REVIEW') {
+          actionButtonsHtml += ' <button class="btn btn-success" onclick="approveClaim(' + c.id + ')">Approve</button>' +
+                               ' <button class="btn btn-danger" onclick="rejectClaim(' + c.id + ')">Reject</button>';
+        }
+        tr.innerHTML =
+          '<td>' + (c.claimNumber || '') + '</td>' +
+          '<td>' + (c.customerId || '') + '</td>' +
+          '<td>' + (c.policyId || '') + '</td>' +
+          '<td>' + (c.amountClaimed || '') + '</td>' +
+          '<td><span class="status-badge status-' + statusClass + '">' + (c.status || '') + '</span></td>' +
+          '<td>' + (c.claimDate || '') + '</td>' +
+          '<td><div class="action-buttons">' + actionButtonsHtml + '</div></td>';
         tbody.appendChild(tr);
       });
     }

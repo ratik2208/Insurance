@@ -30,6 +30,16 @@ public class ClaimController {
         return ResponseEntity.status(201).body(created);
     }
 
+    // Agents/Admins can file a claim on behalf of a customer
+    @PostMapping("/customer/{customerId}")
+    public ResponseEntity<?> fileClaimForCustomer(@PathVariable Long customerId,
+                                                  @RequestBody ClaimCreateDTO dto,
+                                                  Principal principal) {
+        // Optional: verify principal has AGENT/ADMIN role; for now rely on security config/UI gating
+        ClaimDTO created = claimService.fileClaim(customerId, dto);
+        return ResponseEntity.status(201).body(created);
+    }
+
     @GetMapping("/my")
     public List<ClaimDTO> myClaims(Principal principal) {
         Long custId = userService.findIdByEmail(principal.getName());
@@ -40,6 +50,11 @@ public class ClaimController {
     public List<ClaimDTO> claimsForPolicy(@PathVariable Long policyId, Principal principal) {
         // additional authorization check could be added here (admins/agents)
         return claimService.findByPolicy(policyId);
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<?> getClaim(@PathVariable Long id) {
+        return ResponseEntity.ok(claimService.getById(id));
     }
 
     @GetMapping("/search")

@@ -10,4 +10,5 @@ public interface ClaimService {
     List<ClaimDTO> findByPolicy(Long policyId);
     ClaimDTO decideClaim(Long claimId, Long agentId, String decision, String remarks);
     List<ClaimDTO> search(String searchTerm, String status);
+    ClaimDTO getById(Long claimId);
 }
