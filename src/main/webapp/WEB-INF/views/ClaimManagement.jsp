@@ -210,7 +210,7 @@
   <div class="header app-header">
     <div class="header-content">
       <h1>Claim Management</h1>
-      <a href="${pageContext.request.contextPath}/agent-dashboard" class="back-btn">← Back to Dashboard</a>
+      <a href="${pageContext.request.contextPath}/admin-dashboard" class="back-btn">← Back to Dashboard</a>
     </div>
   </div>
 
@@ -221,7 +221,7 @@
 
     <div class="page-header">
       <h2 class="page-title">Insurance Claims</h2>
-      <button class="btn btn-primary" onclick="showFileClaimModal()">+ File New Claim</button>
+      <a href="${pageContext.request.contextPath}/file-claim" class="btn btn-primary">+ File New Claim</a>
     </div>
 
     <div class="search-section">
@@ -260,50 +260,9 @@
             <th>Actions</th>
           </tr>
         </thead>
-        <tbody>
+        <tbody id="claimsTableBody">
           <tr>
-            <td>CLM-2025-0001</td>
-            <td>John Doe</td>
-            <td>POL-2025-0001</td>
-            <td>$2,500</td>
-            <td><span class="status-badge status-under-review">Under Review</span></td>
-            <td>2025-01-15</td>
-            <td>
-              <div class="action-buttons">
-                <button class="btn btn-primary" onclick="viewClaim('CLM-2025-0001')">View</button>
-                <button class="btn btn-success" onclick="approveClaim('CLM-2025-0001')">Approve</button>
-                <button class="btn btn-danger" onclick="rejectClaim('CLM-2025-0001')">Reject</button>
-              </div>
-            </td>
-          </tr>
-          <tr>
-            <td>CLM-2025-0002</td>
-            <td>Jane Smith</td>
-            <td>POL-2025-0002</td>
-            <td>$1,800</td>
-            <td><span class="status-badge status-approved">Approved</span></td>
-            <td>2025-01-10</td>
-            <td>
-              <div class="action-buttons">
-                <button class="btn btn-primary" onclick="viewClaim('CLM-2025-0002')">View</button>
-                <button class="btn btn-secondary" onclick="processPayment('CLM-2025-0002')">Process Payment</button>
-              </div>
-            </td>
-          </tr>
-          <tr>
-            <td>CLM-2025-0003</td>
-            <td>Mike Johnson</td>
-            <td>POL-2025-0001</td>
-            <td>$3,200</td>
-            <td><span class="status-badge status-filed">Filed</span></td>
-            <td>2025-01-20</td>
-            <td>
-              <div class="action-buttons">
-                <button class="btn btn-primary" onclick="viewClaim('CLM-2025-0003')">View</button>
-                <button class="btn btn-success" onclick="approveClaim('CLM-2025-0003')">Approve</button>
-                <button class="btn btn-danger" onclick="rejectClaim('CLM-2025-0003')">Reject</button>
-              </div>
-            </td>
+            <td colspan="7" style="text-align:center; padding:40px;">Loading claims...</td>
           </tr>
         </tbody>
       </table>
@@ -324,10 +283,6 @@
       setTimeout(() => { alertDiv.style.display = 'none'; }, 5000);
     }
 
-    function showFileClaimModal() {
-      showAlert('File claim feature will be implemented', 'success');
-    }
-
     function viewClaim(id) {
       showAlert('Viewing claim #' + id, 'success');
     }
@@ -339,7 +294,7 @@
           url: API_BASE_URL + '/claims/' + id + '/decision?decision=APPROVE',
           method: 'PUT',
           headers: { 'Authorization': 'Bearer ' + authToken },
-          success: function(){ showAlert('Claim approved', 'success'); loadClaims(); },
+          success: function(){ showAlert('Claim approved successfully!', 'success'); loadClaims(); },
           error: function(){ showAlert('Failed to approve claim', 'error'); }
         });
       }
@@ -347,9 +302,10 @@
 
     function rejectClaim(id) {
       if (!authToken) { window.location.href = API_BASE_URL + '/login'; return; }
-      if (confirm('Reject claim #' + id + '?')) {
+      const remarks = prompt('Enter rejection reason:');
+      if (remarks && confirm('Reject claim #' + id + '?')) {
         $.ajax({
-          url: API_BASE_URL + '/claims/' + id + '/decision?decision=REJECT',
+          url: API_BASE_URL + '/claims/' + id + '/decision?decision=REJECT&remarks=' + encodeURIComponent(remarks),
           method: 'PUT',
           headers: { 'Authorization': 'Bearer ' + authToken },
           success: function(){ showAlert('Claim rejected', 'success'); loadClaims(); },
@@ -359,38 +315,45 @@
     }
 
     function processPayment(claimNumber) {
-      showAlert(`Processing payment for claim ${claimNumber}`, 'success');
+      showAlert('Processing payment for claim ' + claimNumber, 'success');
     }
 
     function renderClaims(claims) {
-      const tbody = document.querySelector('.claims-table tbody');
+      const tbody = document.getElementById('claimsTableBody');
       tbody.innerHTML = '';
+      
       if (!claims || claims.length === 0) {
-        const tr = document.createElement('tr');
-        const td = document.createElement('td');
-        td.colSpan = 7;
-        td.textContent = 'No claims found.';
-        tr.appendChild(td);
-        tbody.appendChild(tr);
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:40px; color:#999;">No claims found.</td></tr>';
         return;
       }
+
       claims.forEach(c => {
         const tr = document.createElement('tr');
-        tr.innerHTML = `
-          <td>${c.claimNumber}</td>
-          <td>${c.customerId || ''}</td>
-          <td>${c.policyId || ''}</td>
-          <td>${c.amountClaimed || ''}</td>
-          <td><span class="status-badge status-${(c.status || '').toLowerCase().replace('_','-')}">${c.status}</span></td>
-          <td>${c.claimDate || ''}</td>
-          <td>
-            <div class="action-buttons">
-              <button class="btn btn-primary" onclick="viewClaim(${c.id})">View</button>
-              <button class="btn btn-success" onclick="approveClaim(${c.id})">Approve</button>
-              <button class="btn btn-danger" onclick="rejectClaim(${c.id})">Reject</button>
-            </div>
-          </td>
-        `;
+        
+        // Safe status handling - convert to string and handle null/undefined
+        const statusStr = String(c.status || '').toUpperCase();
+        const statusClass = 'status-' + statusStr.toLowerCase().replace(/_/g, '-');
+        
+        // Format amount
+        const amount = c.amountClaimed ? '$' + Number(c.amountClaimed).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2}) : 'N/A';
+        
+        // Format date
+        const dateStr = c.claimDate ? new Date(c.claimDate).toLocaleDateString('en-US') : 'N/A';
+        
+        tr.innerHTML = '<td>' + (c.claimNumber || 'N/A') + '</td>' +
+          '<td>Customer ID: ' + (c.customerId || 'N/A') + '</td>' +
+          '<td>Policy ID: ' + (c.policyId || 'N/A') + '</td>' +
+          '<td>' + amount + '</td>' +
+          '<td><span class="status-badge ' + statusClass + '">' + statusStr + '</span></td>' +
+          '<td>' + dateStr + '</td>' +
+          '<td>' +
+          '<div class="action-buttons">' +
+          '<button class="btn btn-primary" onclick="viewClaim(' + c.id + ')">View</button>' +
+          '<button class="btn btn-success" onclick="approveClaim(' + c.id + ')">Approve</button>' +
+          '<button class="btn btn-danger" onclick="rejectClaim(' + c.id + ')">Reject</button>' +
+          '</div>' +
+          '</td>';
+        
         tbody.appendChild(tr);
       });
     }
@@ -402,12 +365,19 @@
       if (searchTerm) params.push('q=' + encodeURIComponent(searchTerm));
       if (statusFilter) params.push('status=' + encodeURIComponent(statusFilter));
       const query = params.length ? ('?' + params.join('&')) : '';
+      
       $.ajax({
         url: API_BASE_URL + '/claims/search' + query,
         method: 'GET',
         headers: { 'Authorization': 'Bearer ' + authToken },
-        success: function(data){ renderClaims(data); },
-        error: function(){ showAlert('Search failed', 'error'); }
+        success: function(data){ 
+          console.log('Claims loaded:', data);
+          renderClaims(data); 
+        },
+        error: function(xhr){ 
+          console.error('Failed to load claims:', xhr);
+          showAlert('Search failed', 'error'); 
+        }
       });
     }
 
@@ -417,8 +387,15 @@
         url: API_BASE_URL + '/claims/search',
         method: 'GET',
         headers: { 'Authorization': 'Bearer ' + authToken },
-        success: function(data){ renderClaims(data); },
-        error: function(){ showAlert('Failed to load claims', 'error'); }
+        success: function(data){ 
+          console.log('Claims loaded:', data);
+          renderClaims(data); 
+        },
+        error: function(xhr){ 
+          console.error('Failed to load claims:', xhr);
+          document.getElementById('claimsTableBody').innerHTML = 
+            '<tr><td colspan="7" style="text-align:center; padding:40px; color:#e74c3c;">Failed to load claims. Please try again.</td></tr>';
+        }
       });
     }
 

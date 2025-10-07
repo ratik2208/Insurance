@@ -166,7 +166,7 @@
     <div class="header-content">
       <h1>Admin Dashboard</h1>
       <div class="user-info">
-        <span id="userName">Loading...</span>
+        <span id="userName">Admin User</span>
         <a href="${pageContext.request.contextPath}/login" class="logout-btn" onclick="logout()">Logout</a>
       </div>
     </div>
@@ -179,19 +179,19 @@
 
     <div class="stats-grid">
       <div class="stat-card">
-        <div class="stat-number" id="totalPolicies">-</div>
+        <div class="stat-number" id="totalPolicies">12</div>
         <div class="stat-label">Total Policies</div>
       </div>
       <div class="stat-card">
-        <div class="stat-number" id="totalClaims">-</div>
+        <div class="stat-number" id="totalClaims">45</div>
         <div class="stat-label">Total Claims</div>
       </div>
       <div class="stat-card">
-        <div class="stat-number" id="totalUsers">-</div>
+        <div class="stat-number" id="totalUsers">8</div>
         <div class="stat-label">Total Users</div>
       </div>
       <div class="stat-card">
-        <div class="stat-number" id="pendingClaims">-</div>
+        <div class="stat-number" id="pendingClaims">3</div>
         <div class="stat-label">Pending Claims</div>
       </div>
     </div>
@@ -206,8 +206,8 @@
           Create, update, and manage insurance policies. Set coverage amounts, premiums, and eligibility criteria.
         </div>
         <div class="card-actions">
-          <a href="#" class="btn btn-primary" onclick="showCreatePolicyModal()">Create Policy</a>
-          <a href="#" class="btn btn-secondary" onclick="loadPolicies()">View All Policies</a>
+          <a href="${pageContext.request.contextPath}/policies-page" class="btn btn-primary">Create Policy</a>
+          <a href="${pageContext.request.contextPath}/policies-page" class="btn btn-secondary">View All Policies</a>
         </div>
       </div>
 
@@ -220,8 +220,8 @@
           Manage system users, assign roles, and monitor user activity across the platform.
         </div>
         <div class="card-actions">
-          <a href="#" class="btn btn-primary" onclick="loadUsers()">View Users</a>
-          <a href="#" class="btn btn-secondary" onclick="showUserStats()">User Statistics</a>
+          <a href="${pageContext.request.contextPath}/users-page" class="btn btn-primary">View Users</a>
+          <button class="btn btn-secondary" onclick="showUserStats()">User Statistics</button>
         </div>
       </div>
 
@@ -234,8 +234,8 @@
           Monitor and review all claims in the system. Approve or reject claims as needed.
         </div>
         <div class="card-actions">
-          <a href="#" class="btn btn-primary" onclick="loadAllClaims()">View All Claims</a>
-          <a href="#" class="btn btn-secondary" onclick="showClaimStats()">Claim Statistics</a>
+          <a href="${pageContext.request.contextPath}/claims" class="btn btn-primary">View All Claims</a>
+          <button class="btn btn-secondary" onclick="showClaimStats()">Claim Statistics</button>
         </div>
       </div>
 
@@ -248,8 +248,8 @@
           Configure system parameters, manage roles, and maintain system security.
         </div>
         <div class="card-actions">
-          <a href="#" class="btn btn-primary" onclick="showSystemSettings()">Settings</a>
-          <a href="#" class="btn btn-secondary" onclick="showAuditLog()">Audit Log</a>
+          <button class="btn btn-primary" onclick="showSystemSettings()">Settings</button>
+          <button class="btn btn-secondary" onclick="showAuditLog()">Audit Log</button>
         </div>
       </div>
     </div>
@@ -283,35 +283,6 @@
       window.location.href = API_BASE_URL + '/login';
     }
 
-    function loadDashboardData() {
-      // Load user info
-      document.getElementById('userName').textContent = 'Admin User';
-
-      // Load statistics
-      loadStats();
-    }
-
-    function loadStats() {
-      // This would typically make API calls to get real statistics
-      // For now, we'll show placeholder data
-      document.getElementById('totalPolicies').textContent = '12';
-      document.getElementById('totalClaims').textContent = '45';
-      document.getElementById('totalUsers').textContent = '8';
-      document.getElementById('pendingClaims').textContent = '3';
-    }
-
-    function showCreatePolicyModal() {
-      window.location.href = API_BASE_URL + '/policies-page';
-    }
-
-    function loadPolicies() {
-      window.location.href = API_BASE_URL + '/policies-page';
-    }
-
-    function loadUsers() {
-      window.location.href = API_BASE_URL + '/users-page';
-    }
-
     function showUserStats() {
       if (!authToken) { window.location.href = API_BASE_URL + '/login'; return; }
       $.ajax({
@@ -327,10 +298,6 @@
       });
     }
 
-    function loadAllClaims() {
-      showAlert('Loading all claims...', 'success');
-    }
-
     function showClaimStats() {
       showAlert('Claim statistics feature will be implemented', 'success');
     }
@@ -344,7 +311,8 @@
     }
 
     $(document).ready(function() {
-      loadDashboardData();
+      // Load real statistics if APIs are available
+      // For now using static data
     });
   </script>
 </body>

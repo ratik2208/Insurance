@@ -55,23 +55,57 @@
       setTimeout(() => { alertDiv.style.display = 'none'; }, 5000);
     }
 
-    function renderUsers(users){
-      const tbody = document.getElementById('usersTbody');
-      tbody.innerHTML = '';
-      if (!users || users.length === 0){
-        const tr = document.createElement('tr');
-        const td = document.createElement('td'); td.colSpan = 4; td.textContent = 'No users found.'; td.style.padding = '10px';
-        tr.appendChild(td); tbody.appendChild(tr); return;
-      }
-      users.forEach(u => {
-        const tr = document.createElement('tr');
-        tr.innerHTML = `<td style="padding:10px; border-bottom:1px solid #e9ecef;">${u.id}</td>
-                        <td style=\"padding:10px; border-bottom:1px solid #e9ecef;\">${u.name || ''}</td>
-                        <td style=\"padding:10px; border-bottom:1px solid #e9ecef;\">${u.email}</td>
-                        <td style=\"padding:10px; border-bottom:1px solid #e9ecef;\">${u.role || ''}</td>`;
-        tbody.appendChild(tr);
-      });
-    }
+    function renderUsers(users) {
+    	  const tbody = document.getElementById('usersTbody');
+    	  tbody.innerHTML = '';
+
+    	  if (!users || users.length === 0) {
+    	    const tr = document.createElement('tr');
+    	    const td = document.createElement('td');
+    	    td.colSpan = 4;
+    	    td.textContent = 'No users found.';
+    	    td.style.padding = '10px';
+    	    tr.appendChild(td);
+    	    tbody.appendChild(tr);
+    	    return;
+    	  }
+
+    	  users.forEach(u => {
+    	    const tr = document.createElement('tr');
+
+    	    // Create and append <td> elements safely (no innerHTML)
+    	    const idTd = document.createElement('td');
+    	    idTd.textContent = u.id;
+    	    idTd.style.padding = '10px';
+    	    idTd.style.borderBottom = '1px solid #e9ecef';
+
+    	    const nameTd = document.createElement('td');
+    	    nameTd.textContent = u.name || '';
+    	    nameTd.style.padding = '10px';
+    	    nameTd.style.borderBottom = '1px solid #e9ecef';
+
+    	    const emailTd = document.createElement('td');
+    	    emailTd.textContent = u.email || '';
+    	    emailTd.style.padding = '10px';
+    	    emailTd.style.borderBottom = '1px solid #e9ecef';
+
+    	    const roleTd = document.createElement('td');
+    	    roleTd.textContent = u.role || '';
+    	    roleTd.style.padding = '10px';
+    	    roleTd.style.borderBottom = '1px solid #e9ecef';
+
+    	    // Append all tds to tr
+    	    tr.appendChild(idTd);
+    	    tr.appendChild(nameTd);
+    	    tr.appendChild(emailTd);
+    	    tr.appendChild(roleTd);
+
+    	    // Append the row
+    	    tbody.appendChild(tr);
+    	  });
+    	}
+
+
 
     function loadUsers(){
       $.ajax({

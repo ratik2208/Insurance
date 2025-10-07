@@ -1,4 +1,5 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -46,6 +47,14 @@
       margin: 0 auto;
       padding: 30px 20px;
     }
+    .alert {
+      padding: 15px;
+      margin-bottom: 20px;
+      border-radius: 8px;
+      display: none;
+    }
+    .alert.success { background: #d4edda; border: 1px solid #c3e6cb; color: #155724; }
+    .alert.error { background: #f8d7da; border: 1px solid #f5c6cb; color: #721c24; }
     .page-header {
       display: flex;
       justify-content: space-between;
@@ -88,15 +97,15 @@
     }
     .search-section {
       background: white;
+      padding: 20px;
       border-radius: 12px;
-      padding: 25px;
+      box-shadow: 0 2px 10px rgba(0,0,0,.08);
       margin-bottom: 30px;
-      box-shadow: 0 4px 15px rgba(0,0,0,.1);
     }
     .search-form {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-      gap: 20px;
+      grid-template-columns: 1fr 1fr auto;
+      gap: 15px;
       align-items: end;
     }
     .form-group {
@@ -104,35 +113,31 @@
       flex-direction: column;
     }
     .form-group label {
-      margin-bottom: 8px;
-      color: #333;
+      margin-bottom: 5px;
       font-weight: 500;
-      font-size: 14px;
+      color: #555;
     }
     .form-control {
-      padding: 12px 15px;
-      border: 2px solid #e1e1e1;
-      border-radius: 8px;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 6px;
       font-size: 14px;
-      transition: all .3s ease;
-      background-color: #f9f9f9;
+      transition: border-color 0.3s;
     }
     .form-control:focus {
       outline: none;
       border-color: #667eea;
-      background: #fff;
-      box-shadow: 0 0 0 3px rgba(102,126,234,.1);
     }
     .policies-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-      gap: 25px;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 20px;
     }
     .policy-card {
       background: white;
       border-radius: 12px;
-      padding: 25px;
-      box-shadow: 0 4px 15px rgba(0,0,0,.1);
+      padding: 20px;
+      box-shadow: 0 2px 10px rgba(0,0,0,.08);
       transition: transform 0.3s ease, box-shadow 0.3s ease;
     }
     .policy-card:hover {
@@ -142,20 +147,21 @@
     .policy-header {
       display: flex;
       justify-content: space-between;
-      align-items: flex-start;
-      margin-bottom: 20px;
+      align-items: center;
+      margin-bottom: 15px;
+      padding-bottom: 10px;
+      border-bottom: 2px solid #f0f0f0;
     }
     .policy-number {
-      font-size: 18px;
       font-weight: 600;
-      color: #333;
+      color: #667eea;
+      font-size: 16px;
     }
     .policy-status {
       padding: 4px 12px;
       border-radius: 20px;
       font-size: 12px;
       font-weight: 500;
-      text-transform: uppercase;
     }
     .status-active {
       background: #d4edda;
@@ -166,40 +172,51 @@
       color: #721c24;
     }
     .policy-details {
-      margin-bottom: 20px;
+      margin-bottom: 15px;
     }
     .detail-row {
       display: flex;
       justify-content: space-between;
-      margin-bottom: 8px;
+      padding: 8px 0;
+      border-bottom: 1px solid #f5f5f5;
+    }
+    .detail-row:last-child {
+      border-bottom: none;
     }
     .detail-label {
+      font-weight: 500;
       color: #666;
       font-size: 14px;
     }
     .detail-value {
       color: #333;
-      font-weight: 500;
       font-size: 14px;
+      text-align: right;
     }
-    .policy-actions {
-      display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
+    .loading-message {
+      text-align: center;
+      padding: 40px;
+      color: #666;
+      font-size: 16px;
     }
-    .alert {
-      padding: 15px;
-      margin-bottom: 20px;
-      border-radius: 8px;
-      display: none;
+    .no-policies {
+      text-align: center;
+      padding: 40px;
+      color: #999;
+      font-size: 16px;
     }
-    .alert.success { background: #d4edda; border: 1px solid #c3e6cb; color: #155724; }
-    .alert.error { background: #f8d7da; border: 1px solid #f5c6cb; color: #721c24; }
     @media (max-width: 768px) {
-      .header-content { flex-direction: column; gap: 15px; text-align: center; }
-      .page-header { flex-direction: column; gap: 15px; align-items: flex-start; }
-      .search-form { grid-template-columns: 1fr; }
-      .policies-grid { grid-template-columns: 1fr; }
+      .search-form {
+        grid-template-columns: 1fr;
+      }
+      .policies-grid {
+        grid-template-columns: 1fr;
+      }
+      .page-header {
+        flex-direction: column;
+        gap: 15px;
+        align-items: flex-start;
+      }
     }
   </style>
 </head>
@@ -217,35 +234,35 @@
     </div>
 
     <!-- Create Policy Modal -->
-    <div id="createPolicyModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,.4); align-items:center; justify-content:center;">
-      <div style="background:#fff; padding:25px; border-radius:12px; width:95%; max-width:640px; box-shadow:0 10px 30px rgba(0,0,0,.2);">
-        <h3 style="margin-bottom:15px;">Create New Policy</h3>
+    <div id="createPolicyModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,.5); align-items:center; justify-content:center; z-index:1000;">
+      <div style="background:#fff; padding:25px; border-radius:12px; width:95%; max-width:640px; box-shadow:0 10px 30px rgba(0,0,0,.2); max-height:90vh; overflow-y:auto;">
+        <h3 style="margin-bottom:15px; color:#333;">Create New Policy</h3>
         <form id="createPolicyForm">
           <div class="form-row" style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
             <div class="form-group">
-              <label for="policyTitle">Title</label>
+              <label for="policyTitle">Title *</label>
               <input type="text" id="policyTitle" class="form-control" required />
             </div>
             <div class="form-group">
-              <label for="policyPremium">Premium</label>
+              <label for="policyPremium">Premium *</label>
               <input type="number" step="0.01" id="policyPremium" class="form-control" required />
             </div>
             <div class="form-group">
-              <label for="coverageAmount">Coverage Amount</label>
+              <label for="coverageAmount">Coverage Amount *</label>
               <input type="number" step="0.01" id="coverageAmount" class="form-control" required />
             </div>
             <div class="form-group">
-              <label for="termMonths">Term (months)</label>
+              <label for="termMonths">Term (months) *</label>
               <input type="number" id="termMonths" class="form-control" required />
             </div>
           </div>
           <div class="form-group" style="margin-top:12px;">
             <label for="eligibility">Eligibility Criteria</label>
-            <input type="text" id="eligibility" class="form-control" />
+            <input type="text" id="eligibility" class="form-control" placeholder="e.g., Age 18-65, No pre-existing conditions" />
           </div>
           <div class="form-group" style="margin-top:12px;">
             <label for="policyDescription">Description</label>
-            <textarea id="policyDescription" class="form-control" rows="3"></textarea>
+            <textarea id="policyDescription" class="form-control" rows="3" placeholder="Enter policy description..."></textarea>
           </div>
           <div style="display:flex; gap:10px; justify-content:flex-end; margin-top:16px;">
             <button type="button" class="btn btn-secondary" onclick="closeCreatePolicyModal()">Cancel</button>
@@ -281,64 +298,7 @@
     </div>
 
     <div class="policies-grid" id="policiesGrid">
-      <!-- Policies will be loaded here -->
-      <div class="policy-card">
-        <div class="policy-header">
-          <div class="policy-number">POL-2025-0001</div>
-          <div class="policy-status status-active">Active</div>
-        </div>
-        <div class="policy-details">
-          <div class="detail-row">
-            <span class="detail-label">Title:</span>
-            <span class="detail-value">Comprehensive Health Insurance</span>
-          </div>
-          <div class="detail-row">
-            <span class="detail-label">Coverage Amount:</span>
-            <span class="detail-value">$50,000</span>
-          </div>
-          <div class="detail-row">
-            <span class="detail-label">Premium:</span>
-            <span class="detail-value">$200/month</span>
-          </div>
-          <div class="detail-row">
-            <span class="detail-label">Term:</span>
-            <span class="detail-value">12 months</span>
-          </div>
-        </div>
-        <div class="policy-actions">
-          <button class="btn btn-primary" onclick="viewPolicy('POL-2025-0001')">View Details</button>
-          <button class="btn btn-secondary" onclick="editPolicy('POL-2025-0001')">Edit</button>
-        </div>
-      </div>
-
-      <div class="policy-card">
-        <div class="policy-header">
-          <div class="policy-number">POL-2025-0002</div>
-          <div class="policy-status status-active">Active</div>
-        </div>
-        <div class="policy-details">
-          <div class="detail-row">
-            <span class="detail-label">Title:</span>
-            <span class="detail-value">Family Health Plan</span>
-          </div>
-          <div class="detail-row">
-            <span class="detail-label">Coverage Amount:</span>
-            <span class="detail-value">$100,000</span>
-          </div>
-          <div class="detail-row">
-            <span class="detail-label">Premium:</span>
-            <span class="detail-value">$350/month</span>
-          </div>
-          <div class="detail-row">
-            <span class="detail-label">Term:</span>
-            <span class="detail-value">24 months</span>
-          </div>
-        </div>
-        <div class="policy-actions">
-          <button class="btn btn-primary" onclick="viewPolicy('POL-2025-0002')">View Details</button>
-          <button class="btn btn-secondary" onclick="editPolicy('POL-2025-0002')">Edit</button>
-        </div>
-      </div>
+      <div class="loading-message">Loading policies...</div>
     </div>
   </div>
 
@@ -346,6 +306,11 @@
   <script>
     const API_BASE_URL = window.APP_CONTEXT || '${pageContext.request.contextPath}';
     let authToken = localStorage.getItem('token');
+
+    // Check authentication
+    if (!authToken) {
+      window.location.href = API_BASE_URL + '/login';
+    }
 
     function showAlert(message, type) {
       const alertDiv = document.getElementById('alertMessage');
@@ -357,12 +322,19 @@
     }
 
     function showCreatePolicyModal() {
-      if (!authToken) { window.location.href = API_BASE_URL + '/login'; return; }
+      if (!authToken) { 
+        window.location.href = API_BASE_URL + '/login'; 
+        return; 
+      }
       $('#createPolicyModal').css('display','flex');
     }
-    function closeCreatePolicyModal(){ $('#createPolicyModal').hide(); }
 
-    $('#createPolicyForm').on('submit', function(e){
+    function closeCreatePolicyModal() { 
+      $('#createPolicyModal').hide(); 
+      $('#createPolicyForm')[0].reset();
+    }
+
+    $('#createPolicyForm').on('submit', function(e) {
       e.preventDefault();
       const dto = {
         title: $('#policyTitle').val().trim(),
@@ -372,75 +344,110 @@
         termMonths: parseInt($('#termMonths').val(), 10),
         eligibilityCriteria: $('#eligibility').val().trim()
       };
+
       if (!dto.title || isNaN(dto.coverageAmount) || isNaN(dto.premium) || isNaN(dto.termMonths)) {
-        showAlert('Please fill all required fields', 'error');
+        showAlert('Please fill all required fields correctly', 'error');
         return;
       }
+
       $.ajax({
         url: API_BASE_URL + '/policies',
         method: 'POST',
         contentType: 'application/json',
         headers: { 'Authorization': 'Bearer ' + authToken },
         data: JSON.stringify(dto),
-        success: function(){
+        success: function(response) {
           closeCreatePolicyModal();
-          showAlert('Policy created successfully', 'success');
+          showAlert('Policy created successfully!', 'success');
           loadPolicies();
-          $('#createPolicyForm')[0].reset();
         },
-        error: function(xhr){
-          showAlert(xhr.responseText || 'Failed to create policy', 'error');
+        error: function(xhr) {
+          const errorMsg = xhr.responseText || 'Failed to create policy. Please try again.';
+          showAlert(errorMsg, 'error');
         }
       });
     });
 
-    function viewPolicy(policyNumber) {
-      showAlert(`Viewing policy: ${policyNumber}`, 'success');
-    }
-
-    function editPolicy(policyNumber) {
-      showAlert(`Editing policy: ${policyNumber}`, 'success');
-    }
-
     function renderPolicies(policies) {
       const grid = document.getElementById('policiesGrid');
       grid.innerHTML = '';
+      
       if (!policies || policies.length === 0) {
-        grid.innerHTML = '<div>No policies found.</div>';
+        grid.innerHTML = '<div class="no-policies">No policies found. Create your first policy to get started!</div>';
         return;
       }
+
       policies.forEach(p => {
         const activeClass = p.active ? 'status-active' : 'status-inactive';
         const activeText = p.active ? 'Active' : 'Inactive';
         const card = document.createElement('div');
         card.className = 'policy-card';
-        card.innerHTML = `
-          <div class="policy-header">
-            <div class="policy-number">${p.policyNumber}</div>
-            <div class="policy-status ${activeClass}">${activeText}</div>
-          </div>
-          <div class="policy-details">
-            <div class="detail-row"><span class="detail-label">Title:</span><span class="detail-value">${p.title || ''}</span></div>
-            <div class="detail-row"><span class="detail-label">Coverage Amount:</span><span class="detail-value">${p.coverageAmount || ''}</span></div>
-            <div class="detail-row"><span class="detail-label">Premium:</span><span class="detail-value">${p.premium || ''}</span></div>
-            <div class="detail-row"><span class="detail-label">Term:</span><span class="detail-value">${p.termMonths || ''} months</span></div>
-          </div>
-          <div class="policy-actions">
-            <button class="btn btn-primary" onclick="viewPolicy(${p.id})">View Details</button>
-          </div>
-        `;
+        
+        // Build HTML string using JavaScript (not JSP EL with backticks)
+        let detailsHTML = '<div class="policy-header">' +
+          '<div class="policy-number">' + (p.policyNumber || 'N/A') + '</div>' +
+          '<div class="policy-status ' + activeClass + '">' + activeText + '</div>' +
+          '</div>' +
+          '<div class="policy-details">' +
+          '<div class="detail-row">' +
+          '<span class="detail-label">Title:</span>' +
+          '<span class="detail-value">' + (p.title || 'N/A') + '</span>' +
+          '</div>' +
+          '<div class="detail-row">' +
+          '<span class="detail-label">Coverage:</span>' +
+          '<span class="detail-value">$' + (p.coverageAmount ? p.coverageAmount.toFixed(2) : '0.00') + '</span>' +
+          '</div>' +
+          '<div class="detail-row">' +
+          '<span class="detail-label">Premium:</span>' +
+          '<span class="detail-value">$' + (p.premium ? p.premium.toFixed(2) : '0.00') + '/month</span>' +
+          '</div>' +
+          '<div class="detail-row">' +
+          '<span class="detail-label">Term:</span>' +
+          '<span class="detail-value">' + (p.termMonths || '0') + ' months</span>' +
+          '</div>';
+        
+        // Conditional rendering in JavaScript (NOT JSP EL)
+        if (p.eligibilityCriteria) {
+          detailsHTML += '<div class="detail-row">' +
+            '<span class="detail-label">Eligibility:</span>' +
+            '<span class="detail-value">' + p.eligibilityCriteria + '</span>' +
+            '</div>';
+        }
+        
+        if (p.createdBy) {
+          detailsHTML += '<div class="detail-row">' +
+            '<span class="detail-label">Created By:</span>' +
+            '<span class="detail-value">' + p.createdBy + '</span>' +
+            '</div>';
+        }
+        
+        detailsHTML += '</div>'; // Close policy-details
+        
+        card.innerHTML = detailsHTML;
         grid.appendChild(card);
       });
     }
 
     function loadPolicies() {
-      if (!authToken) { window.location.href = API_BASE_URL + '/login'; return; }
+      if (!authToken) { 
+        window.location.href = API_BASE_URL + '/login'; 
+        return; 
+      }
+
       $.ajax({
         url: API_BASE_URL + '/policies',
         method: 'GET',
         headers: { 'Authorization': 'Bearer ' + authToken },
-        success: function(data){ renderPolicies(data); },
-        error: function(){ showAlert('Failed to load policies', 'error'); }
+        success: function(data) {
+          console.log('Policies loaded:', data);
+          renderPolicies(data);
+        },
+        error: function(xhr) {
+          console.error('Failed to load policies:', xhr);
+          showAlert('Failed to load policies. Please refresh the page.', 'error');
+          document.getElementById('policiesGrid').innerHTML = 
+            '<div class="no-policies">Error loading policies. Please try again.</div>';
+        }
       });
     }
 
@@ -448,16 +455,22 @@
       const searchTerm = document.getElementById('searchTerm').value;
       const statusFilter = document.getElementById('statusFilter').value;
       const active = statusFilter ? (statusFilter === 'active') : null;
+      
       const params = [];
       if (searchTerm) params.push('q=' + encodeURIComponent(searchTerm));
       if (active !== null) params.push('active=' + active);
       const query = params.length ? ('?' + params.join('&')) : '';
+
       $.ajax({
         url: API_BASE_URL + '/policies/search' + query,
         method: 'GET',
         headers: { 'Authorization': 'Bearer ' + authToken },
-        success: function(data){ renderPolicies(data); },
-        error: function(){ showAlert('Search failed', 'error'); }
+        success: function(data) {
+          renderPolicies(data);
+        },
+        error: function() {
+          showAlert('Search failed. Please try again.', 'error');
+        }
       });
     }
 
@@ -467,6 +480,7 @@
       searchPolicies();
     });
 
+    // Load policies on page load
     $(document).ready(function() {
       loadPolicies();
     });

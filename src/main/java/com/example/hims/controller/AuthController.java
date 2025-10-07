@@ -4,16 +4,16 @@ import com.example.hims.dao.UserDao;
 import com.example.hims.dto.AuthRequestDTO;
 import com.example.hims.dto.AuthResponseDTO;
 import com.example.hims.entity.User;
-
-import com.example.security.JwtUtil; // assumed present
+import com.example.security.JwtUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.*;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.transaction.annotation.Transactional;
+
+import javax.servlet.http.Cookie;
+import javax.servlet.http.HttpServletResponse;
 
 @RestController
 @RequestMapping("/auth")
@@ -47,14 +47,30 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody AuthRequestDTO req) {
+    public ResponseEntity<?> login(@RequestBody AuthRequestDTO req, HttpServletResponse response) {
         try {
-            Authentication auth = authenticationManager.authenticate(
-                    new UsernamePasswordAuthenticationToken(req.getEmail(), req.getPassword()));
-            // generate token
+            // Authenticate user
+            authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(req.getEmail(), req.getPassword())
+            );
+
+            // Generate JWT token
             String token = jwtUtil.generateToken(req.getEmail());
             User u = userRepository.findByEmail(req.getEmail()).orElseThrow();
+
+            // Create HttpOnly cookie (secure, not accessible via JS)
+            Cookie cookie = new Cookie("jwt_token", token);
+            cookie.setHttpOnly(true);   // Prevent XSS access
+            cookie.setSecure(false);    // Set to true in production (HTTPS only)
+            cookie.setPath("/");        // Available to all paths
+            cookie.setMaxAge(24 * 3600); // 1 day in seconds
+
+            // Add cookie to response
+            response.addCookie(cookie);
+
+            // Return token and user info in response body (for frontend use)
             return ResponseEntity.ok(new AuthResponseDTO(token, u.getId(), u.getRole().name()));
+
         } catch (BadCredentialsException ex) {
             return ResponseEntity.status(401).body("Invalid credentials");
         }

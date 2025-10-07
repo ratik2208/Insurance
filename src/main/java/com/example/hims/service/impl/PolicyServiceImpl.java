@@ -30,7 +30,8 @@ public class PolicyServiceImpl implements PolicyService {
     @Override
     @Transactional
     public PolicyDTO createPolicy(PolicyCreateDTO dto, Long createdByUserId) {
-        User creator = userDao.findById(createdByUserId).orElseThrow(() -> new EntityNotFoundException("Creator not found"));
+        User creator = userDao.findById(createdByUserId)
+                .orElseThrow(() -> new EntityNotFoundException("Creator not found"));
 
         Policy p = new Policy();
         p.setPolicyNumber("POL-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase());
@@ -49,27 +50,35 @@ public class PolicyServiceImpl implements PolicyService {
     @Override
     @Transactional(readOnly = true)
     public List<PolicyDTO> listPolicies() {
-        return policyDao.findAll().stream().map(this::toDto).collect(Collectors.toList());
+        return policyDao.findAll().stream()
+                .map(this::toDto)
+                .collect(Collectors.toList());
     }
 
     @Override
     @Transactional(readOnly = true)
     public PolicyDTO getPolicy(Long id) {
-        Policy p = policyDao.findById(id).orElseThrow(() -> new EntityNotFoundException("Policy not found"));
+        Policy p = policyDao.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Policy not found"));
         return toDto(p);
     }
 
     @Override
     @Transactional(readOnly = true)
     public List<PolicyDTO> findByCreator(Long userId) {
-        User creator = userDao.findById(userId).orElseThrow(() -> new EntityNotFoundException("User not found"));
-        return policyDao.findByCreator(creator).stream().map(this::toDto).collect(Collectors.toList());
+        User creator = userDao.findById(userId)
+                .orElseThrow(() -> new EntityNotFoundException("User not found"));
+        return policyDao.findByCreator(creator).stream()
+                .map(this::toDto)
+                .collect(Collectors.toList());
     }
 
     @Override
     @Transactional(readOnly = true)
     public List<PolicyDTO> search(String searchTerm, Boolean active) {
-        return policyDao.search(searchTerm, active).stream().map(this::toDto).collect(Collectors.toList());
+        return policyDao.search(searchTerm, active).stream()
+                .map(this::toDto)
+                .collect(Collectors.toList());
     }
 
     private PolicyDTO toDto(Policy p) {
@@ -84,6 +93,8 @@ public class PolicyServiceImpl implements PolicyService {
         dto.setActive(p.isActive());
         dto.setStartDate(p.getStartDate());
         dto.setEndDate(p.getEndDate());
+        dto.setEligibilityCriteria(p.getEligibilityCriteria());
+        dto.setCreatedBy(p.getCreatedBy() != null ? p.getCreatedBy().getName() : null);
         return dto;
     }
 }

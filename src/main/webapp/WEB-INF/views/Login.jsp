@@ -10,53 +10,122 @@
     * { margin:0; padding:0; box-sizing:border-box; }
     body {
       font-family: 'Arial', sans-serif;
-      
+      background: #f5f7fa;
       min-height: 100vh;
       display: flex;
       align-items: center;
       justify-content: center;
     }
     .login-container {
-      background: #fff; border-radius: 15px; box-shadow: 0 20px 40px rgba(0,0,0,.1);
-      padding: 40px; width: 100%; max-width: 450px; margin: 20px;
+      background: #fff;
+      border-radius: 15px;
+      box-shadow: 0 20px 40px rgba(0,0,0,.1);
+      padding: 40px;
+      width: 100%;
+      max-width: 450px;
+      margin: 20px;
     }
     .header { text-align:center; margin-bottom:30px; }
     .header h1 { color:#333; font-size:28px; font-weight:600; margin-bottom:10px; }
     .header p { color:#666; font-size:16px; }
     .form-group { margin-bottom:25px; }
-    .form-group label { display:block; margin-bottom:8px; color:#333; font-weight:500; font-size:14px; }
-    .form-control {
-      width:100%; padding:12px 15px; border:2px solid #e1e1e1; border-radius:8px; font-size:14px;
-      transition: all .3s ease; background-color:#f9f9f9;
+    .form-group label {
+      display:block;
+      margin-bottom:8px;
+      color:#333;
+      font-weight:500;
+      font-size:14px;
     }
-    .form-control:focus { outline:none; border-color:#667eea; background:#fff; box-shadow:0 0 0 3px rgba(102,126,234,.1); }
+    .form-control {
+      width:100%;
+      padding:12px 15px;
+      border:2px solid #e1e1e1;
+      border-radius:8px;
+      font-size:14px;
+      transition: all .3s ease;
+      background-color:#f9f9f9;
+    }
+    .form-control:focus {
+      outline:none;
+      border-color:#667eea;
+      background:#fff;
+      box-shadow:0 0 0 3px rgba(102,126,234,.1);
+    }
     .form-control:hover { border-color:#c1c1c1; }
     .submit-btn {
-      width:100%; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color:#fff; border:none; padding:15px 30px;
-      border-radius:10px; font-size:16px; font-weight:600; cursor:pointer; transition: all .3s ease; margin-top:20px;
-      position:relative; display:flex; align-items:center; justify-content:center;
+      width:100%;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color:#fff;
+      border:none;
+      padding:15px 30px;
+      border-radius:10px;
+      font-size:16px;
+      font-weight:600;
+      cursor:pointer;
+      transition: all .3s ease;
+      margin-top:20px;
+      position:relative;
+      display:flex;
+      align-items:center;
+      justify-content:center;
     }
     .submit-btn:hover:not(:disabled) { transform: translateY(-2px); box-shadow:0 10px 25px rgba(102,126,234,.3); }
     .submit-btn:active { transform: translateY(0); }
     .submit-btn:disabled { opacity:.7; cursor:not-allowed; transform:none; }
     .loading-spinner {
-      display:none; width:20px; height:20px; border:2px solid #fff; border-top:2px solid transparent; border-radius:50%;
-      animation: spin 1s linear infinite; margin-right:10px;
+      display:none;
+      width:20px;
+      height:20px;
+      border:2px solid #fff;
+      border-top:2px solid transparent;
+      border-radius:50%;
+      animation: spin 1s linear infinite;
+      margin-right:10px;
     }
     @keyframes spin { 0%{transform:rotate(0)} 100%{transform:rotate(360deg)} }
-    .register-link { text-align:center; margin-top:25px; color:#666; }
-    .register-link a { color:#667eea; text-decoration:none; font-weight:500; }
+    .register-link {
+      text-align:center;
+      margin-top:25px;
+      color:#666;
+    }
+    .register-link a {
+      color:#667eea;
+      text-decoration:none;
+      font-weight:500;
+    }
     .register-link a:hover { text-decoration:underline; }
-    .error { color:#e74c3c; font-size:12px; margin-top:5px; display:none; }
+    .error {
+      color:#e74c3c;
+      font-size:12px;
+      margin-top:5px;
+      display:none;
+    }
     .required { color:#e74c3c; }
     .alert {
-      padding:15px; margin-bottom:20px; border-radius:8px; display:none; animation: slideDown .3s ease-out; position:relative;
+      padding:15px;
+      margin-bottom:20px;
+      border-radius:8px;
+      display:none;
+      animation: slideDown .3s ease-out;
+      position:relative;
     }
     .alert.success { background:#d4edda; border:1px solid #c3e6cb; color:#155724; }
     .alert.error { background:#f8d7da; border:1px solid #f5c6cb; color:#721c24; }
-    .alert-close { position:absolute; right:10px; top:10px; cursor:pointer; font-size:18px; line-height:1; color:inherit; opacity:.7; }
+    .alert-close {
+      position:absolute;
+      right:10px;
+      top:10px;
+      cursor:pointer;
+      font-size:18px;
+      line-height:1;
+      color:inherit;
+      opacity:.7;
+    }
     .alert-close:hover { opacity:1; }
-    @keyframes slideDown { from{opacity:0; transform: translateY(-20px)} to{opacity:1; transform: translateY(0)} }
+    @keyframes slideDown {
+      from{opacity:0; transform: translateY(-20px)}
+      to{opacity:1; transform: translateY(0)}
+    }
     @media (max-width:768px){
       .login-container { padding:20px; margin:10px; }
       .header h1 { font-size:24px; }
@@ -106,6 +175,27 @@
     window.APP_CONTEXT = API_BASE_URL;
     const LOGIN_ENDPOINT = API_BASE_URL + '/auth/login';
 
+    // ✅ Set cookie in frontend
+    function setCookie(name, value, days) {
+      const d = new Date();
+      d.setTime(d.getTime() + (days * 24 * 60 * 60 * 1000));
+      const expires = "expires=" + d.toUTCString();
+      const path = "path=/";
+      document.cookie = name + "=" + encodeURIComponent(value) + ";" + expires + ";" + path;
+    }
+
+    // ✅ Get cookie
+    function getCookie(name) {
+      const value = "; " + document.cookie;
+      const parts = value.split("; " + name + "=");
+      if (parts.length === 2) return parts.pop().split(";").shift();
+    }
+
+    // ✅ Delete cookie (for logout)
+    function deleteCookie(name) {
+      document.cookie = name + "=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+    }
+
     function showAlert(message, type, autoClose = true) {
       const alertDiv = document.getElementById('alertMessage');
       const alertText = document.getElementById('alertText');
@@ -139,11 +229,8 @@
 
     function validateForm() {
       let isValid = true;
-
-      // Hide old errors
       document.querySelectorAll('.error').forEach(e => e.style.display = 'none');
 
-      // Check required fields
       document.querySelectorAll('input[required]').forEach(field => {
         if (!field.value || !field.value.trim()) {
           const err = document.getElementById(field.id + 'Error');
@@ -155,7 +242,6 @@
         }
       });
 
-      // Email format
       const email = document.getElementById('email').value.trim();
       const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (email && !emailPattern.test(email)) {
@@ -182,14 +268,17 @@
         type: 'POST',
         contentType: 'application/json',
         data: JSON.stringify(credentials),
-        success: function (data, textStatus, xhr) {
-          // Store token and user info
+        success: function (data) {
+          // ✅ Set JWT in cookie via frontend JavaScript
+          setCookie('jwt_token', data.token, 1); // expires in 1 day
+
+          // Optional: Also store in localStorage
           localStorage.setItem('token', data.token);
           localStorage.setItem('userId', data.userId);
           localStorage.setItem('userRole', data.role);
-          
+
           showAlert('Login successful! Redirecting to dashboard...', 'success');
-          
+
           // Redirect based on role
           setTimeout(function () {
             if (data.role === 'ADMIN') {
@@ -201,20 +290,12 @@
             }
           }, 1500);
         },
-        error: function (xhr, status, error) {
-          console.group('AJAX Login Error Debug');
-          console.log('HTTP Status Code:', xhr.status);
-          console.log('jQuery Status Text:', status);
-          console.log('Error Thrown:', error);
-          console.log('Response Content-Type:', xhr.getResponseHeader('Content-Type'));
-          console.log('Raw Response Body:', xhr.responseText);
-          console.groupEnd();
-
+        error: function (xhr) {
           let msg = 'Login failed. Please try again.';
           if (xhr.status === 0) {
-            msg = 'Unable to connect to server. Please ensure it is running at ' + API_BASE_URL;
+            msg = 'Unable to connect to server. Please check your connection.';
           } else if (xhr.status === 401) {
-            msg = 'Invalid email or password. Please check your credentials.';
+            msg = 'Invalid email or password.';
           } else if (xhr.status >= 500) {
             msg = 'Server error. Please try again later.';
           } else {
@@ -227,7 +308,9 @@
           }
           showAlert(msg, 'error', false);
         },
-        complete: function () { setLoadingState(false); }
+        complete: function () {
+          setLoadingState(false);
+        }
       });
     }
 
