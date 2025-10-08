@@ -52,6 +52,8 @@ public class AuthController {
             // Authenticate user
             authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(req.getEmail(), req.getPassword())
+                
+                
             );
 
             // Generate JWT token
