@@ -10,6 +10,7 @@ import com.example.hims.service.PolicyService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
 import javax.persistence.EntityNotFoundException;
 import java.util.List;
 import java.util.UUID;
@@ -41,16 +42,43 @@ public class PolicyServiceImpl implements PolicyService {
         p.setPremium(dto.getPremium());
         p.setTermMonths(dto.getTermMonths());
         p.setEligibilityCriteria(dto.getEligibilityCriteria());
+        p.setActive(true); // ✅ Set active by default
         p.setCreatedBy(creator);
 
-        policyDao.save(p);
-        return toDto(p);
+        Policy saved = policyDao.save(p);
+        
+        // ✅ DEBUG: Log saved policy
+        System.out.println("=== POLICY CREATED ===");
+        System.out.println("ID: " + saved.getId());
+        System.out.println("Title: " + saved.getTitle());
+        System.out.println("Coverage: " + saved.getCoverageAmount());
+        System.out.println("Premium: " + saved.getPremium());
+        
+        return toDto(saved);
     }
 
     @Override
     @Transactional(readOnly = true)
     public List<PolicyDTO> listPolicies() {
-        return policyDao.findAll().stream()
+        List<Policy> policies = policyDao.findAll();
+        
+        // ✅ DEBUG: Log all policies from database
+        System.out.println("=== LIST POLICIES (Service Layer) ===");
+        System.out.println("Found " + policies.size() + " policies in database");
+        
+        for (Policy p : policies) {
+            System.out.println("Policy ID: " + p.getId());
+            System.out.println("  - Title: " + p.getTitle());
+            System.out.println("  - Policy Number: " + p.getPolicyNumber());
+            System.out.println("  - Coverage: " + p.getCoverageAmount());
+            System.out.println("  - Premium: " + p.getPremium());
+            System.out.println("  - Term: " + p.getTermMonths());
+            System.out.println("  - Active: " + p.isActive());
+            System.out.println("  - Description: " + p.getDescription());
+            System.out.println("---");
+        }
+        
+        return policies.stream()
                 .map(this::toDto)
                 .collect(Collectors.toList());
     }
@@ -94,7 +122,24 @@ public class PolicyServiceImpl implements PolicyService {
         dto.setStartDate(p.getStartDate());
         dto.setEndDate(p.getEndDate());
         dto.setEligibilityCriteria(p.getEligibilityCriteria());
-        dto.setCreatedBy(p.getCreatedBy() != null ? p.getCreatedBy().getName() : null);
+        
+        // ✅ Safe handling of createdBy
+        if (p.getCreatedBy() != null) {
+            // Try getName() first, fallback to getEmail()
+            String creatorName = p.getCreatedBy().getName();
+            if (creatorName == null || creatorName.trim().isEmpty()) {
+                creatorName = p.getCreatedBy().getEmail();
+            }
+            dto.setCreatedBy(creatorName);
+        }
+        
+        // ✅ DEBUG: Log conversion
+        System.out.println("Converting to DTO:");
+        System.out.println("  Entity Title: " + p.getTitle());
+        System.out.println("  DTO Title: " + dto.getTitle());
+        System.out.println("  Entity Coverage: " + p.getCoverageAmount());
+        System.out.println("  DTO Coverage: " + dto.getCoverageAmount());
+        
         return dto;
     }
 }

@@ -9,6 +9,7 @@ import java.util.Optional;
 public interface ClaimDao {
     Claim save(Claim claim);
     Optional<Claim> findById(Long id);
+    List<Claim> findAll();
     List<Claim> findByCustomer(User customer);
     List<Claim> findByPolicy(Policy policy);
     List<Claim> search(String searchTerm, String status);

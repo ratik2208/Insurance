@@ -15,19 +15,20 @@
     <!-- Scan for controllers, services, DAOs, and security utilities -->
     <context:component-scan base-package="com.example" />
 
-	 
-	 
-	 <security:http pattern="/auth/login" security="none"/>
-	<security:http pattern="/register" security="none"/>
-	<security:http pattern="/auth/register" security="none"/>
- 
+    <!-- ✅ ADDED: Enable method-level security with @PreAuthorize -->
+    <security:global-method-security pre-post-annotations="enabled" />
+
+    <security:http pattern="/auth/login" security="none"/>
+    <security:http pattern="/register" security="none"/>
+    <security:http pattern="/auth/register" security="none"/>
     
-     <!-- Protect all other endpoints -->
+    <!-- Protect all other endpoints -->
     <security:http entry-point-ref="jwtAuthEntryPoint" create-session="stateless" authentication-manager-ref="authenticationManager" use-expressions="true">
-       <!-- Public endpoints -->
+        <!-- Public endpoints -->
         <security:intercept-url pattern="/" access="permitAll"/>
         <security:intercept-url pattern="/login" access="permitAll"/>
         <security:intercept-url pattern="/register" access="permitAll"/>
+        
         <!-- Allow JSP view endpoints; page JS will guard access using JWT in localStorage -->
         <security:intercept-url pattern="/admin-dashboard" access="permitAll"/>
         <security:intercept-url pattern="/agent-dashboard" access="permitAll"/>
@@ -37,10 +38,6 @@
         <security:intercept-url pattern="/file-claim" access="permitAll"/>
    
         <security:custom-filter ref="jwtFilter" before="FORM_LOGIN_FILTER"/>
-        <!-- <security:intercept-url pattern="/jobs/**" access="isAuthenticated()"/>
-        <security:intercept-url pattern="/users/**" access="isAuthenticated()"/>
-		<security:intercept-url pattern="/applications/**" access="isAuthenticated()"/>
-			<security:intercept-url pattern="/profile" access="isAuthenticated()"/> -->
         <security:csrf disabled="true"/>
     </security:http>
     
@@ -51,16 +48,15 @@
     <bean id="customUserDetailsService" class="com.example.security.CustomUserDetailsService"/>
     
     <bean id="passwordEncoder" class="org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder">
-		<constructor-arg value="12"/>
-		</bean>
+        <constructor-arg value="12"/>
+    </bean>
     
     <!-- Authentication manager -->
     <security:authentication-manager alias="authenticationManager">
-         <security:authentication-provider user-service-ref="customUserDetailsService">
-             <security:password-encoder ref="passwordEncoder"/>
-         </security:authentication-provider>
+        <security:authentication-provider user-service-ref="customUserDetailsService">
+            <security:password-encoder ref="passwordEncoder"/>
+        </security:authentication-provider>
     </security:authentication-manager> 
-    
     
     <!-- Enable Spring MVC annotations -->
     <mvc:annotation-driven />
@@ -73,8 +69,8 @@
     <mvc:view-controller path="/login" view-name="Login" />
     <mvc:view-controller path="/register" view-name="register" />
     <mvc:view-controller path="/admin-dashboard" view-name="AdminDashboard" />
-    <mvc:view-controller path="/agent-dashboard" view-name="AgentDashboard" />
-    <mvc:view-controller path="/customer-dashboard" view-name="CustomerDashboard" />
+    <mvc:view-controller path="/agent-dashboard" view-name="agent-dashboard" />
+    <mvc:view-controller path="/customer-dashboard" view-name="customer-dashboard" />
     <mvc:view-controller path="/policies" view-name="PolicyManagement" />
     <mvc:view-controller path="/policies-page" view-name="PolicyManagement" />
     <mvc:view-controller path="/claims" view-name="ClaimManagement" />
@@ -86,10 +82,7 @@
         <property name="url" value="jdbc:postgresql://localhost:5432/hims" />
         <property name="username" value="postgres" />
         <property name="password" value="rootroot" />
-
     </bean>
-
-    <!-- Removed legacy Hibernate SessionFactory/HibernateUtil in favor of pure JPA configuration -->
 
     <!-- JPA EntityManagerFactory (for @PersistenceContext based DAOs) -->
     <bean id="entityManagerFactory" class="org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean">

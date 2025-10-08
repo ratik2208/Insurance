@@ -13,6 +13,7 @@ import com.example.hims.service.ClaimService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
 import javax.persistence.EntityNotFoundException;
 import java.math.BigDecimal;
 import java.util.List;
@@ -54,9 +55,10 @@ public class ClaimServiceImpl implements ClaimService {
             throw new IllegalArgumentException("Claim amount exceeds coverage");
         }
 
-        if (claimDao.existsByPolicyAndCustomer(policy, customer)) {
-            throw new IllegalArgumentException("You have already filed a claim for this policy");
-        }
+        // Removed duplicate claim check - allow multiple claims per policy
+        // if (claimDao.existsByPolicyAndCustomer(policy, customer)) {
+        //     throw new IllegalArgumentException("You have already filed a claim for this policy");
+        // }
 
         Claim c = new Claim();
         c.setClaimNumber("CLM-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase());
@@ -69,6 +71,24 @@ public class ClaimServiceImpl implements ClaimService {
 
         claimDao.save(c);
         return toDto(c);
+    }
+
+    // ✅ NEW: Get all claims (for agents and admins)
+    @Override
+    @Transactional(readOnly = true)
+    public List<ClaimDTO> listClaims() {
+        return claimDao.findAll().stream()
+                .map(this::toDto)
+                .collect(Collectors.toList());
+    }
+
+    // ✅ NEW: Get specific claim by ID
+    @Override
+    @Transactional(readOnly = true)
+    public ClaimDTO getClaim(Long id) {
+        Claim claim = claimDao.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Claim not found with id: " + id));
+        return toDto(claim);
     }
 
     @Override
@@ -112,8 +132,12 @@ public class ClaimServiceImpl implements ClaimService {
 
         if ("APPROVE".equalsIgnoreCase(decision) || "APPROVED".equalsIgnoreCase(decision)) {
             c.setStatus(ClaimStatus.APPROVED);
+            // ✅ Set approved amount to claimed amount
+            c.setAmountApproved(c.getAmountClaimed());
         } else if ("REJECT".equalsIgnoreCase(decision) || "REJECTED".equalsIgnoreCase(decision)) {
             c.setStatus(ClaimStatus.REJECTED);
+            // ✅ Set approved amount to zero for rejected claims
+            c.setAmountApproved(BigDecimal.ZERO);
         } else {
             throw new IllegalArgumentException("Unknown decision: " + decision);
         }
@@ -133,16 +157,39 @@ public class ClaimServiceImpl implements ClaimService {
                 .collect(Collectors.toList());
     }
 
+    // ✅ UPDATED: Enhanced DTO mapping with all fields
     private ClaimDTO toDto(Claim c) {
         ClaimDTO dto = new ClaimDTO();
         dto.setId(c.getId());
         dto.setClaimNumber(c.getClaimNumber());
-        dto.setPolicyId(c.getPolicy() != null ? c.getPolicy().getId() : null);
-        dto.setCustomerId(c.getCustomer() != null ? c.getCustomer().getId() : null);
+        
+        // Policy information
+        if (c.getPolicy() != null) {
+            dto.setPolicyId(c.getPolicy().getId());
+            dto.setPolicyNumber(c.getPolicy().getPolicyNumber());
+        }
+        
+        // Customer information
+        if (c.getCustomer() != null) {
+            dto.setCustomerId(c.getCustomer().getId());
+            dto.setCustomerName(c.getCustomer().getName());
+            dto.setCustomerEmail(c.getCustomer().getEmail());
+        }
+        
+        // Claim details
         dto.setAmountClaimed(c.getAmountClaimed());
+        dto.setAmountApproved(c.getAmountApproved());
         dto.setStatus(c.getStatus() != null ? c.getStatus().name() : null);
         dto.setClaimDate(c.getClaimDate());
         dto.setRemarks(c.getRemarks());
+        dto.setSupportingDocumentUrl(c.getSupportingDocumentUrl());
+        
+        // Decision information
+        if (c.getDecisionBy() != null) {
+            dto.setDecisionByName(c.getDecisionBy().getName());
+        }
+        dto.setDecisionDate(c.getDecisionDate());
+        
         return dto;
     }
 }

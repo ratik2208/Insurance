@@ -17,20 +17,23 @@ import java.util.Date;
 @Component
 public class JwtUtil {
 
-    @Value("${hims.jwt.secret:replace_with_secure_32_char_min_secret}")
+    @Value("${hims.jwt.secret:my-secret-key-must-be-at-least-32-characters-long-for-hs256-algorithm}")
     private String jwtSecret;
 
-    @Value("${hims.jwt.expirationMs:3600000}")
+    @Value("${hims.jwt.expirationMs:86400000}") // 24 hours default
     private long expirationMs;
 
     private Key signingKey;
 
     @PostConstruct
     public void init() {
-        // create a signing key from secret (HS256). Secret must be long enough.
+        // Create a signing key from secret (HS256). Secret must be at least 32 chars.
         signingKey = Keys.hmacShaKeyFor(jwtSecret.getBytes());
     }
 
+    /**
+     * Generate JWT token for the given username/email
+     */
     public String generateToken(String subject) {
         Date now = new Date();
         Date expiry = new Date(now.getTime() + expirationMs);
@@ -42,6 +45,9 @@ public class JwtUtil {
                 .compact();
     }
 
+    /**
+     * Extract username from JWT token
+     */
     public String getUsernameFromToken(String token) {
         try {
             Claims claims = Jwts.parserBuilder()
@@ -55,9 +61,15 @@ public class JwtUtil {
         }
     }
 
+    /**
+     * Validate JWT token (check signature and expiration)
+     */
     public boolean validateToken(String token) {
         try {
-            Jwts.parserBuilder().setSigningKey(signingKey).build().parseClaimsJws(token);
+            Jwts.parserBuilder()
+                .setSigningKey(signingKey)
+                .build()
+                .parseClaimsJws(token);
             return true;
         } catch (JwtException | IllegalArgumentException ex) {
             return false;

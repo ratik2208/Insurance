@@ -116,6 +116,8 @@
 
 package com.example.hims.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import javax.persistence.*;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -152,13 +154,14 @@ public class Policy {
     @Column(name = "is_active", nullable = false)
     private boolean active = true;
 
-    // ADD THESE FIELDS
     @Column(name = "start_date")
     private LocalDate startDate;
 
     @Column(name = "end_date")
     private LocalDate endDate;
 
+    // ✅ IMPORTANT: Add @JsonIgnore to prevent circular reference
+    @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "created_by")
     private User createdBy;
@@ -178,112 +181,45 @@ public class Policy {
     }
 
     // Constructors
-    public Policy() {
-    }
+    public Policy() {}
 
     // Getters and Setters
-    public Long getId() {
-        return id;
-    }
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
 
-    public void setId(Long id) {
-        this.id = id;
-    }
+    public String getPolicyNumber() { return policyNumber; }
+    public void setPolicyNumber(String policyNumber) { this.policyNumber = policyNumber; }
 
-    public String getPolicyNumber() {
-        return policyNumber;
-    }
+    public String getTitle() { return title; }
+    public void setTitle(String title) { this.title = title; }
 
-    public void setPolicyNumber(String policyNumber) {
-        this.policyNumber = policyNumber;
-    }
+    public String getDescription() { return description; }
+    public void setDescription(String description) { this.description = description; }
 
-    public String getTitle() {
-        return title;
-    }
+    public Double getCoverageAmount() { return coverageAmount; }
+    public void setCoverageAmount(Double coverageAmount) { this.coverageAmount = coverageAmount; }
 
-    public void setTitle(String title) {
-        this.title = title;
-    }
+    public Double getPremium() { return premium; }
+    public void setPremium(Double premium) { this.premium = premium; }
 
-    public String getDescription() {
-        return description;
-    }
+    public Integer getTermMonths() { return termMonths; }
+    public void setTermMonths(Integer termMonths) { this.termMonths = termMonths; }
 
-    public void setDescription(String description) {
-        this.description = description;
-    }
+    public String getEligibilityCriteria() { return eligibilityCriteria; }
+    public void setEligibilityCriteria(String eligibilityCriteria) { this.eligibilityCriteria = eligibilityCriteria; }
 
-    public Double getCoverageAmount() {
-        return coverageAmount;
-    }
+    public boolean isActive() { return active; }
+    public void setActive(boolean active) { this.active = active; }
 
-    public void setCoverageAmount(Double coverageAmount) {
-        this.coverageAmount = coverageAmount;
-    }
+    public LocalDate getStartDate() { return startDate; }
+    public void setStartDate(LocalDate startDate) { this.startDate = startDate; }
 
-    public Double getPremium() {
-        return premium;
-    }
+    public LocalDate getEndDate() { return endDate; }
+    public void setEndDate(LocalDate endDate) { this.endDate = endDate; }
 
-    public void setPremium(Double premium) {
-        this.premium = premium;
-    }
+    public User getCreatedBy() { return createdBy; }
+    public void setCreatedBy(User createdBy) { this.createdBy = createdBy; }
 
-    public Integer getTermMonths() {
-        return termMonths;
-    }
-
-    public void setTermMonths(Integer termMonths) {
-        this.termMonths = termMonths;
-    }
-
-    public String getEligibilityCriteria() {
-        return eligibilityCriteria;
-    }
-
-    public void setEligibilityCriteria(String eligibilityCriteria) {
-        this.eligibilityCriteria = eligibilityCriteria;
-    }
-
-    public boolean isActive() {
-        return active;
-    }
-
-    public void setActive(boolean active) {
-        this.active = active;
-    }
-
-    // ADD THESE GETTERS AND SETTERS
-    public LocalDate getStartDate() {
-        return startDate;
-    }
-
-    public void setStartDate(LocalDate startDate) {
-        this.startDate = startDate;
-    }
-
-    public LocalDate getEndDate() {
-        return endDate;
-    }
-
-    public void setEndDate(LocalDate endDate) {
-        this.endDate = endDate;
-    }
-
-    public User getCreatedBy() {
-        return createdBy;
-    }
-
-    public void setCreatedBy(User createdBy) {
-        this.createdBy = createdBy;
-    }
-
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(LocalDateTime createdAt) {
-        this.createdAt = createdAt;
-    }
+    public LocalDateTime getCreatedAt() { return createdAt; }
+    public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
 }

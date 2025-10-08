@@ -41,6 +41,7 @@
       border-radius: 6px;
       text-decoration: none;
       transition: all .3s ease;
+      cursor: pointer;
     }
     .logout-btn:hover {
       background: rgba(255,255,255,.3);
@@ -154,6 +155,73 @@
     }
     .alert.success { background: #d4edda; border: 1px solid #c3e6cb; color: #155724; }
     .alert.error { background: #f8d7da; border: 1px solid #f5c6cb; color: #721c24; }
+    
+    /* Modal Styles */
+    .modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,.5);
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+    }
+    .modal-content {
+      background: #fff;
+      padding: 25px;
+      border-radius: 12px;
+      width: 95%;
+      max-width: 1200px;
+      max-height: 85vh;
+      overflow-y: auto;
+      box-shadow: 0 10px 30px rgba(0,0,0,.3);
+    }
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+    .modal-header h3 {
+      margin: 0;
+      color: #333;
+    }
+    .close-btn {
+      background: #f8f9fa;
+      color: #667eea;
+      border: 1px solid #e9ecef;
+      padding: 8px 16px;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+    table th {
+      background: #f8f9fa;
+      padding: 12px;
+      text-align: left;
+      font-weight: 600;
+      border-bottom: 2px solid #dee2e6;
+    }
+    table td {
+      padding: 12px;
+      border-bottom: 1px solid #e9ecef;
+    }
+    .badge {
+      padding: 4px 10px;
+      border-radius: 5px;
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+    .badge-info { background: #17a2b8; color: white; }
+    .badge-success { background: #28a745; color: white; }
+    .badge-danger { background: #dc3545; color: white; }
+    .badge-warning { background: #ffc107; color: #333; }
+    
     @media (max-width: 768px) {
       .header-content { flex-direction: column; gap: 15px; text-align: center; }
       .dashboard-grid { grid-template-columns: 1fr; }
@@ -167,7 +235,7 @@
       <h1>Admin Dashboard</h1>
       <div class="user-info">
         <span id="userName">Admin User</span>
-        <a href="${pageContext.request.contextPath}/login" class="logout-btn" onclick="logout()">Logout</a>
+        <a href="#" class="logout-btn" onclick="event.preventDefault(); logout();">Logout</a>
       </div>
     </div>
   </div>
@@ -179,19 +247,19 @@
 
     <div class="stats-grid">
       <div class="stat-card">
-        <div class="stat-number" id="totalPolicies">12</div>
+        <div class="stat-number" id="totalPolicies">-</div>
         <div class="stat-label">Total Policies</div>
       </div>
       <div class="stat-card">
-        <div class="stat-number" id="totalClaims">45</div>
+        <div class="stat-number" id="totalClaims">-</div>
         <div class="stat-label">Total Claims</div>
       </div>
       <div class="stat-card">
-        <div class="stat-number" id="totalUsers">8</div>
+        <div class="stat-number" id="totalUsers">-</div>
         <div class="stat-label">Total Users</div>
       </div>
       <div class="stat-card">
-        <div class="stat-number" id="pendingClaims">3</div>
+        <div class="stat-number" id="pendingClaims">-</div>
         <div class="stat-label">Pending Claims</div>
       </div>
     </div>
@@ -234,7 +302,7 @@
           Monitor and review all claims in the system. Approve or reject claims as needed.
         </div>
         <div class="card-actions">
-          <a href="${pageContext.request.contextPath}/claims" class="btn btn-primary">View All Claims</a>
+          <button class="btn btn-primary" onclick="viewAllClaims()">View All Claims</button>
           <button class="btn btn-secondary" onclick="showClaimStats()">Claim Statistics</button>
         </div>
       </div>
@@ -255,32 +323,196 @@
     </div>
   </div>
 
+  <!-- Claims Modal -->
+  <div id="claimsModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>All Claims</h3>
+        <button class="close-btn" onclick="closeClaimsModal()">Close</button>
+      </div>
+      <div id="claimsTableContainer">
+        <p>Loading claims...</p>
+      </div>
+    </div>
+  </div>
+
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
   <script>
-    const API_BASE_URL = window.APP_CONTEXT || '${pageContext.request.contextPath}';
+    var API_BASE_URL = window.APP_CONTEXT || '${pageContext.request.contextPath}';
     window.APP_CONTEXT = API_BASE_URL;
-    let authToken = localStorage.getItem('token');
-    let userRole = localStorage.getItem('userRole');
+    var authToken = localStorage.getItem('token');
+    var userRole = localStorage.getItem('userRole');
 
     // Check authentication
     if (!authToken || userRole !== 'ADMIN') {
+      console.error('Not authenticated as ADMIN');
       window.location.href = API_BASE_URL + '/login';
     }
 
     function showAlert(message, type) {
-      const alertDiv = document.getElementById('alertMessage');
-      const alertText = document.getElementById('alertText');
+      var alertDiv = document.getElementById('alertMessage');
+      var alertText = document.getElementById('alertText');
       alertText.textContent = message;
       alertDiv.className = 'alert ' + type;
       alertDiv.style.display = 'block';
-      setTimeout(() => { alertDiv.style.display = 'none'; }, 5000);
+      setTimeout(function() { alertDiv.style.display = 'none'; }, 5000);
     }
 
     function logout() {
       localStorage.removeItem('token');
       localStorage.removeItem('userId');
       localStorage.removeItem('userRole');
-      window.location.href = API_BASE_URL + '/login';
+      $.ajax({
+        url: API_BASE_URL + '/auth/logout',
+        type: 'POST',
+        complete: function() {
+          window.location.href = API_BASE_URL + '/login';
+        }
+      });
+    }
+
+    function loadDashboardStats() {
+      if (!authToken) return;
+      
+      // Load total claims
+      $.ajax({
+        url: API_BASE_URL + '/claims',
+        method: 'GET',
+        headers: { 'Authorization': 'Bearer ' + authToken },
+        success: function(claims) {
+          var total = claims.length;
+          var pending = claims.filter(function(c) { 
+            return c.status === 'FILED' || c.status === 'UNDER_REVIEW'; 
+          }).length;
+          document.getElementById('totalClaims').textContent = total;
+          document.getElementById('pendingClaims').textContent = pending;
+        },
+        error: function() {
+          document.getElementById('totalClaims').textContent = '0';
+          document.getElementById('pendingClaims').textContent = '0';
+        }
+      });
+      
+      // Load total policies
+      $.ajax({
+        url: API_BASE_URL + '/policies',
+        method: 'GET',
+        headers: { 'Authorization': 'Bearer ' + authToken },
+        success: function(policies) {
+          document.getElementById('totalPolicies').textContent = policies.length;
+        },
+        error: function() {
+          document.getElementById('totalPolicies').textContent = '0';
+        }
+      });
+      
+      // Load user stats if endpoint exists
+      $.ajax({
+        url: API_BASE_URL + '/users/stats',
+        method: 'GET',
+        headers: { 'Authorization': 'Bearer ' + authToken },
+        success: function(data) {
+          document.getElementById('totalUsers').textContent = data.totalUsers || '0';
+        },
+        error: function() {
+          document.getElementById('totalUsers').textContent = '-';
+        }
+      });
+    }
+
+    function viewAllClaims() {
+      if (!authToken) {
+        alert('Authentication required. Please login again.');
+        window.location.href = API_BASE_URL + '/login';
+        return;
+      }
+      
+      console.log('Fetching claims with token:', authToken.substring(0, 20) + '...');
+      
+      $('#claimsTableContainer').html('<p style="text-align:center; padding:20px; color:#999;">Loading claims...</p>');
+      $('#claimsModal').css('display', 'flex');
+      
+      $.ajax({
+        url: API_BASE_URL + '/claims',
+        method: 'GET',
+        headers: { 
+          'Authorization': 'Bearer ' + authToken,
+          'Content-Type': 'application/json'
+        },
+        success: function(claims) {
+          console.log('✅ Claims loaded successfully:', claims);
+          displayClaimsTable(claims);
+        },
+        error: function(xhr, status, error) {
+          console.error('❌ Failed to load claims');
+          console.error('Status:', xhr.status);
+          console.error('Response:', xhr.responseText);
+          
+          if (xhr.status === 401) {
+            alert('Session expired. Please login again.');
+            localStorage.removeItem('token');
+            localStorage.removeItem('userId');
+            localStorage.removeItem('userRole');
+            window.location.href = API_BASE_URL + '/login';
+          } else {
+            $('#claimsTableContainer').html('<div style="text-align:center; padding:40px; color:#e74c3c;"><h4>Failed to load claims</h4><p>' + (xhr.responseText || 'Unknown error') + '</p></div>');
+          }
+        }
+      });
+    }
+
+    function displayClaimsTable(claims) {
+      if (!claims || claims.length === 0) {
+        $('#claimsTableContainer').html('<div style="text-align:center; padding:40px; color:#999;"><h4>No claims found</h4><p>There are no claims in the system yet.</p></div>');
+        return;
+      }
+      
+      var html = '<table>';
+      html += '<thead><tr>';
+      html += '<th>Claim #</th>';
+      html += '<th>Customer</th>';
+      html += '<th>Policy</th>';
+      html += '<th>Amount</th>';
+      html += '<th>Status</th>';
+      html += '<th>Date</th>';
+      html += '</tr></thead><tbody>';
+      
+      for (var i = 0; i < claims.length; i++) {
+        var c = claims[i];
+        html += '<tr>';
+        html += '<td>' + (c.claimNumber || 'N/A') + '</td>';
+        html += '<td>' + (c.customerName || 'N/A') + '</td>';
+        html += '<td>' + (c.policyNumber || 'N/A') + '</td>';
+        html += '<td>₹' + Number(c.amountClaimed || 0).toLocaleString('en-IN') + '</td>';
+        html += '<td><span class="badge badge-' + getStatusBadgeClass(c.status) + '">' + c.status + '</span></td>';
+        html += '<td>' + formatDate(c.claimDate) + '</td>';
+        html += '</tr>';
+      }
+      
+      html += '</tbody></table>';
+      $('#claimsTableContainer').html(html);
+    }
+
+    function getStatusBadgeClass(status) {
+      if (status === 'APPROVED') return 'success';
+      if (status === 'REJECTED') return 'danger';
+      if (status === 'UNDER_REVIEW') return 'warning';
+      return 'info';
+    }
+
+    function formatDate(dateArray) {
+      if (!dateArray) return 'N/A';
+      if (Array.isArray(dateArray)) {
+        var year = dateArray[0];
+        var month = String(dateArray[1]).padStart(2, '0');
+        var day = String(dateArray[2]).padStart(2, '0');
+        return day + '-' + month + '-' + year;
+      }
+      return String(dateArray);
+    }
+
+    function closeClaimsModal() {
+      $('#claimsModal').hide();
     }
 
     function showUserStats() {
@@ -290,9 +522,8 @@
         method: 'GET',
         headers: { 'Authorization': 'Bearer ' + authToken },
         success: function(data){
-          const msg = `Total: ${data.totalUsers} | Admin: ${data.adminCount} | Agent: ${data.agentCount} | Customer: ${data.customerCount} | Today: ${data.registeredToday} | Last 7d: ${data.registeredLast7Days}`;
+          var msg = 'Total: ' + data.totalUsers + ' | Admin: ' + data.adminCount + ' | Agent: ' + data.agentCount + ' | Customer: ' + data.customerCount;
           showAlert(msg, 'success');
-          document.getElementById('totalUsers').textContent = data.totalUsers;
         },
         error: function(){ showAlert('Failed to load user stats', 'error'); }
       });
@@ -311,8 +542,10 @@
     }
 
     $(document).ready(function() {
-      // Load real statistics if APIs are available
-      // For now using static data
+      console.log('Admin Dashboard loaded');
+      console.log('Token present:', !!authToken);
+      console.log('User role:', userRole);
+      loadDashboardStats();
     });
   </script>
 </body>

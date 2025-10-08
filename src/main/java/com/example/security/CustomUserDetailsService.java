@@ -28,9 +28,11 @@ public class CustomUserDetailsService implements UserDetailsService {
      */
     @Override
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
-        if (email != null) email = email.trim();
+        if (email != null) {
+            email = email.trim();
+        }
 
-        User appUser = userService.findByEmail(email); // <-- must throw or return null if not found
+        User appUser = userService.findByEmail(email);
         if (appUser == null) {
             throw new UsernameNotFoundException("User not found with email: " + email);
         }
@@ -41,7 +43,7 @@ public class CustomUserDetailsService implements UserDetailsService {
 
         return org.springframework.security.core.userdetails.User
                 .withUsername(appUser.getEmail())
-                .password(appUser.getPassword() == null ? "" : appUser.getPassword()) // password must be BCrypt
+                .password(appUser.getPassword() == null ? "" : appUser.getPassword())
                 .authorities(Collections.singletonList(new SimpleGrantedAuthority(authority)))
                 .accountExpired(false)
                 .accountLocked(false)
