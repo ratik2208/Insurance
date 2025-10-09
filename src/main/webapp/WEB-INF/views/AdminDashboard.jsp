@@ -341,11 +341,23 @@
     var API_BASE_URL = window.APP_CONTEXT || '${pageContext.request.contextPath}';
     window.APP_CONTEXT = API_BASE_URL;
     var authToken = localStorage.getItem('token');
-    var userRole = localStorage.getItem('userRole');
+    var userRole = localStorage.getItem('role'); // ✅ FIXED: Changed from 'userRole' to 'role'
+
+    console.log('=== ADMIN DASHBOARD INITIALIZATION ===');
+    console.log('Token:', authToken ? authToken.substring(0, 20) + '...' : 'MISSING');
+    console.log('Role:', userRole);
 
     // Check authentication
-    if (!authToken || userRole !== 'ADMIN') {
-      console.error('Not authenticated as ADMIN');
+    if (!authToken) {
+      console.error('❌ No token found - redirecting to login');
+      alert('Please login first');
+      window.location.href = API_BASE_URL + '/login';
+    }
+
+    // ✅ FIXED: Check for ADMIN role (case-insensitive)
+    if (userRole && userRole.toUpperCase() !== 'ADMIN') {
+      console.error('❌ Not authorized - User role:', userRole);
+      alert('Access denied. Admin access only.');
       window.location.href = API_BASE_URL + '/login';
     }
 
@@ -359,9 +371,10 @@
     }
 
     function logout() {
+      console.log('Logging out...');
       localStorage.removeItem('token');
       localStorage.removeItem('userId');
-      localStorage.removeItem('userRole');
+      localStorage.removeItem('role');
       $.ajax({
         url: API_BASE_URL + '/auth/logout',
         type: 'POST',
@@ -372,7 +385,12 @@
     }
 
     function loadDashboardStats() {
-      if (!authToken) return;
+      if (!authToken) {
+        console.error('Cannot load stats - no token');
+        return;
+      }
+      
+      console.log('Loading dashboard statistics...');
       
       // Load total claims
       $.ajax({
@@ -380,6 +398,7 @@
         method: 'GET',
         headers: { 'Authorization': 'Bearer ' + authToken },
         success: function(claims) {
+          console.log('✅ Claims loaded:', claims.length);
           var total = claims.length;
           var pending = claims.filter(function(c) { 
             return c.status === 'FILED' || c.status === 'UNDER_REVIEW'; 
@@ -387,9 +406,14 @@
           document.getElementById('totalClaims').textContent = total;
           document.getElementById('pendingClaims').textContent = pending;
         },
-        error: function() {
+        error: function(xhr) {
+          console.error('❌ Failed to load claims:', xhr.status);
           document.getElementById('totalClaims').textContent = '0';
           document.getElementById('pendingClaims').textContent = '0';
+          if (xhr.status === 401) {
+            alert('Session expired. Please login again.');
+            window.location.href = API_BASE_URL + '/login';
+          }
         }
       });
       
@@ -399,23 +423,35 @@
         method: 'GET',
         headers: { 'Authorization': 'Bearer ' + authToken },
         success: function(policies) {
+          console.log('✅ Policies loaded:', policies.length);
           document.getElementById('totalPolicies').textContent = policies.length;
         },
-        error: function() {
+        error: function(xhr) {
+          console.error('❌ Failed to load policies:', xhr.status);
           document.getElementById('totalPolicies').textContent = '0';
+          if (xhr.status === 401) {
+            alert('Session expired. Please login again.');
+            window.location.href = API_BASE_URL + '/login';
+          }
         }
       });
       
-      // Load user stats if endpoint exists
+      // Load user stats
       $.ajax({
         url: API_BASE_URL + '/users/stats',
         method: 'GET',
         headers: { 'Authorization': 'Bearer ' + authToken },
         success: function(data) {
+          console.log('✅ User stats loaded:', data);
           document.getElementById('totalUsers').textContent = data.totalUsers || '0';
         },
-        error: function() {
+        error: function(xhr) {
+          console.error('❌ Failed to load user stats:', xhr.status);
           document.getElementById('totalUsers').textContent = '-';
+          if (xhr.status === 401) {
+            alert('Session expired. Please login again.');
+            window.location.href = API_BASE_URL + '/login';
+          }
         }
       });
     }
@@ -427,7 +463,7 @@
         return;
       }
       
-      console.log('Fetching claims with token:', authToken.substring(0, 20) + '...');
+      console.log('Fetching all claims...');
       
       $('#claimsTableContainer').html('<p style="text-align:center; padding:20px; color:#999;">Loading claims...</p>');
       $('#claimsModal').css('display', 'flex');
@@ -440,7 +476,7 @@
           'Content-Type': 'application/json'
         },
         success: function(claims) {
-          console.log('✅ Claims loaded successfully:', claims);
+          console.log('✅ Claims loaded successfully:', claims.length);
           displayClaimsTable(claims);
         },
         error: function(xhr, status, error) {
@@ -450,9 +486,7 @@
           
           if (xhr.status === 401) {
             alert('Session expired. Please login again.');
-            localStorage.removeItem('token');
-            localStorage.removeItem('userId');
-            localStorage.removeItem('userRole');
+            localStorage.clear();
             window.location.href = API_BASE_URL + '/login';
           } else {
             $('#claimsTableContainer').html('<div style="text-align:center; padding:40px; color:#e74c3c;"><h4>Failed to load claims</h4><p>' + (xhr.responseText || 'Unknown error') + '</p></div>');
@@ -516,7 +550,11 @@
     }
 
     function showUserStats() {
-      if (!authToken) { window.location.href = API_BASE_URL + '/login'; return; }
+      if (!authToken) { 
+        window.location.href = API_BASE_URL + '/login'; 
+        return; 
+      }
+      
       $.ajax({
         url: API_BASE_URL + '/users/stats',
         method: 'GET',
@@ -525,7 +563,14 @@
           var msg = 'Total: ' + data.totalUsers + ' | Admin: ' + data.adminCount + ' | Agent: ' + data.agentCount + ' | Customer: ' + data.customerCount;
           showAlert(msg, 'success');
         },
-        error: function(){ showAlert('Failed to load user stats', 'error'); }
+        error: function(xhr){ 
+          if (xhr.status === 401) {
+            alert('Session expired. Please login again.');
+            window.location.href = API_BASE_URL + '/login';
+          } else {
+            showAlert('Failed to load user stats', 'error'); 
+          }
+        }
       });
     }
 
@@ -542,10 +587,13 @@
     }
 
     $(document).ready(function() {
-      console.log('Admin Dashboard loaded');
+      console.log('=== Admin Dashboard Ready ===');
       console.log('Token present:', !!authToken);
       console.log('User role:', userRole);
-      loadDashboardStats();
+      
+      if (authToken) {
+        loadDashboardStats();
+      }
     });
   </script>
 </body>

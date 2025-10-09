@@ -2,15 +2,19 @@ package com.example.hims.controller;
 
 import com.example.hims.dto.ClaimCreateDTO;
 import com.example.hims.dto.ClaimDTO;
-import com.example.hims.entity.ClaimStatus;
+import com.example.hims.exception.ClaimNotFoundException;
 import com.example.hims.service.ClaimService;
 import com.example.hims.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.validation.BindingResult;
+import org.springframework.validation.FieldError;
 import org.springframework.web.bind.annotation.*;
 
+import javax.validation.Valid;
 import java.security.Principal;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -31,13 +35,22 @@ public class ClaimController {
     // ✅ File a new claim (Customer only)
     @PostMapping
     @PreAuthorize("hasRole('CUSTOMER')")
-    public ResponseEntity<?> fileClaim(@RequestBody ClaimCreateDTO dto, Principal principal) {
+    public ResponseEntity<?> fileClaim(@Valid @RequestBody ClaimCreateDTO dto, BindingResult result, Principal principal) {
+        // Check for validation errors
+        if (result.hasErrors()) {
+            Map<String, String> errors = new HashMap<>();
+            for (FieldError error : result.getFieldErrors()) {
+                errors.put(error.getField(), error.getDefaultMessage());
+            }
+            return ResponseEntity.badRequest().body(errors);
+        }
+        
         Long custId = userService.findIdByEmail(principal.getName());
         ClaimDTO created = claimService.fileClaim(custId, dto);
         return ResponseEntity.status(201).body(created);
     }
 
-    // ✅ NEW: Get ALL claims (Admin and Agent can see all claims)
+    // ✅ Get ALL claims (Admin and Agent can see all claims)
     @GetMapping
     @PreAuthorize("hasAnyRole('ADMIN', 'AGENT')")
     public ResponseEntity<List<ClaimDTO>> getAllClaims() {
@@ -53,11 +66,16 @@ public class ClaimController {
         return claimService.findByCustomer(custId);
     }
 
-    // ✅ NEW: Get specific claim by ID (All authenticated users)
+    // ✅ Get specific claim by ID (All authenticated users)
     @GetMapping("/{id}")
     @PreAuthorize("hasAnyRole('ADMIN', 'AGENT', 'CUSTOMER')")
     public ResponseEntity<ClaimDTO> getClaim(@PathVariable Long id) {
         ClaimDTO claim = claimService.getClaim(id);
+        
+        if (claim == null) {
+            throw new ClaimNotFoundException("Claim not found with ID: " + id);
+        }
+        
         return ResponseEntity.ok(claim);
     }
 
@@ -65,7 +83,8 @@ public class ClaimController {
     @GetMapping("/policy/{policyId}")
     @PreAuthorize("hasAnyRole('ADMIN', 'AGENT')")
     public List<ClaimDTO> claimsForPolicy(@PathVariable Long policyId) {
-        return claimService.findByPolicy(policyId);
+        List<ClaimDTO> claims = claimService.findByPolicy(policyId);
+        return claims;
     }
 
     // ✅ Search claims
@@ -76,7 +95,7 @@ public class ClaimController {
         return claimService.search(q, status);
     }
 
-    // ✅ UPDATED: Decide on a claim (Admin and Agent only) - Matches frontend call
+    // ✅ Decide on a claim (Admin and Agent only)
     @PutMapping("/{claimId}/decide")
     @PreAuthorize("hasAnyRole('ADMIN', 'AGENT')")
     public ResponseEntity<?> decideClaim(@PathVariable Long claimId,
@@ -85,11 +104,17 @@ public class ClaimController {
         Long agentId = userService.findIdByEmail(principal.getName());
         String decision = request.get("decision");
         String remarks = request.get("remarks");
+        
         ClaimDTO updated = claimService.decideClaim(claimId, agentId, decision, remarks);
+        
+        if (updated == null) {
+            throw new ClaimNotFoundException("Claim not found with ID: " + claimId);
+        }
+        
         return ResponseEntity.ok(updated);
     }
 
-    // ✅ LEGACY ENDPOINT: Keep for backward compatibility (using query params)
+    // ✅ LEGACY ENDPOINT: Keep for backward compatibility
     @PutMapping("/{claimId}/decision")
     @PreAuthorize("hasAnyRole('ADMIN', 'AGENT')")
     public ResponseEntity<?> decideClaimLegacy(@PathVariable Long claimId,
@@ -98,6 +123,11 @@ public class ClaimController {
                                         Principal principal) {
         Long agentId = userService.findIdByEmail(principal.getName());
         ClaimDTO updated = claimService.decideClaim(claimId, agentId, decision, remarks);
+        
+        if (updated == null) {
+            throw new ClaimNotFoundException("Claim not found with ID: " + claimId);
+        }
+        
         return ResponseEntity.ok(updated);
     }
 }

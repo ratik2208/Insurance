@@ -6,10 +6,15 @@ import com.example.hims.service.PolicyService;
 import com.example.hims.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.BindingResult;
+import org.springframework.validation.FieldError;
 import org.springframework.web.bind.annotation.*;
 
+import javax.validation.Valid;
 import java.security.Principal;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/policies")
@@ -25,7 +30,16 @@ public class PolicyController {
     }
 
     @PostMapping
-    public ResponseEntity<?> createPolicy(@RequestBody PolicyCreateDTO dto, Principal principal) {
+    public ResponseEntity<?> createPolicy(@Valid @RequestBody PolicyCreateDTO dto, BindingResult result, Principal principal) {
+        // Check for validation errors
+        if (result.hasErrors()) {
+            Map<String, String> errors = new HashMap<>();
+            for (FieldError error : result.getFieldErrors()) {
+                errors.put(error.getField(), error.getDefaultMessage());
+            }
+            return ResponseEntity.badRequest().body(errors);
+        }
+        
         Long creatorId = userService.findIdByEmail(principal.getName());
         PolicyDTO created = policyService.createPolicy(dto, creatorId);
         return ResponseEntity.ok(created);

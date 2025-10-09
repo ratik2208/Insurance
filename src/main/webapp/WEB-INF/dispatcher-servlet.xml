@@ -15,54 +15,149 @@
     <!-- Scan for controllers, services, DAOs, and security utilities -->
     <context:component-scan base-package="com.example" />
 
-    <!-- ✅ ADDED: Enable method-level security with @PreAuthorize -->
+    <!-- Enable method-level security with @PreAuthorize -->
     <security:global-method-security pre-post-annotations="enabled" />
 
-    <security:http pattern="/auth/login" security="none"/>
+    <!-- ===== PUBLIC ENDPOINTS (No Security) ===== -->
+    <security:http pattern="/login" security="none"/>
     <security:http pattern="/register" security="none"/>
+    <security:http pattern="/auth/login" security="none"/>
     <security:http pattern="/auth/register" security="none"/>
+    <security:http pattern="/static/**" security="none"/>
+    <security:http pattern="/css/**" security="none"/>
+    <security:http pattern="/js/**" security="none"/>
+    <security:http pattern="/images/**" security="none"/>
     
-    <!-- Protect all other endpoints -->
-    <security:http entry-point-ref="jwtAuthEntryPoint" create-session="stateless" authentication-manager-ref="authenticationManager" use-expressions="true">
-        <!-- Public endpoints -->
-        <security:intercept-url pattern="/" access="permitAll"/>
-        <security:intercept-url pattern="/login" access="permitAll"/>
-        <security:intercept-url pattern="/register" access="permitAll"/>
+    <!-- ===== PROTECTED ENDPOINTS (JWT Required) ===== -->
+    <security:http entry-point-ref="jwtAuthEntryPoint" 
+                   create-session="stateless" 
+                   authentication-manager-ref="authenticationManager" 
+                   use-expressions="true">
         
-        <!-- Allow JSP view endpoints; page JS will guard access using JWT in localStorage -->
+        <!-- JWT Filter - Executes before form login -->
+        <security:custom-filter ref="jwtFilter" before="FORM_LOGIN_FILTER"/>
+        
+        <!-- Allow home page -->
+        <security:intercept-url pattern="/" access="permitAll"/>
+        
+        <!-- ===== JSP VIEW PAGES (Frontend will check localStorage) ===== -->
         <security:intercept-url pattern="/admin-dashboard" access="permitAll"/>
         <security:intercept-url pattern="/agent-dashboard" access="permitAll"/>
         <security:intercept-url pattern="/customer-dashboard" access="permitAll"/>
-        <security:intercept-url pattern="/policies" access="permitAll"/>
+        <security:intercept-url pattern="/policies-page" access="permitAll"/>
         <security:intercept-url pattern="/claims" access="permitAll"/>
         <security:intercept-url pattern="/file-claim" access="permitAll"/>
-   
-        <security:custom-filter ref="jwtFilter" before="FORM_LOGIN_FILTER"/>
+        <security:intercept-url pattern="/users-page" access="permitAll"/>
+        
+        <!-- ===== REST API ENDPOINTS (Backend JWT Validation) ===== -->
+        
+        <!-- Auth endpoints -->
+        <security:intercept-url pattern="/auth/**" access="permitAll"/>
+        
+        <!-- User Management APIs -->
+        <security:intercept-url pattern="/users" method="GET" access="hasRole('ADMIN') or hasRole('AGENT')"/>
+        <security:intercept-url pattern="/users/*" method="GET" access="hasRole('ADMIN') or hasRole('AGENT')"/>
+        <security:intercept-url pattern="/users" method="POST" access="hasRole('ADMIN')"/>
+        <security:intercept-url pattern="/users/*" method="PUT" access="hasRole('ADMIN')"/>
+        <security:intercept-url pattern="/users/*" method="DELETE" access="hasRole('ADMIN')"/>
+        
+        <!-- Policy Management APIs -->
+        <security:intercept-url pattern="/policies" method="GET" access="isAuthenticated()"/>
+        <security:intercept-url pattern="/policies/*" method="GET" access="isAuthenticated()"/>
+        <security:intercept-url pattern="/policies" method="POST" access="hasRole('AGENT') or hasRole('ADMIN')"/>
+        <security:intercept-url pattern="/policies/*" method="PUT" access="hasRole('AGENT') or hasRole('ADMIN')"/>
+        <security:intercept-url pattern="/policies/*" method="DELETE" access="hasRole('ADMIN')"/>
+        <security:intercept-url pattern="/policies/**" access="isAuthenticated()"/>
+        
+        <!-- Claim Management APIs -->
+        <security:intercept-url pattern="/claims" method="GET" access="isAuthenticated()"/>
+        <security:intercept-url pattern="/claims/*" method="GET" access="isAuthenticated()"/>
+        <security:intercept-url pattern="/claims" method="POST" access="isAuthenticated()"/>
+        <security:intercept-url pattern="/claims/*" method="PUT" access="hasRole('AGENT') or hasRole('ADMIN')"/>
+        <security:intercept-url pattern="/claims/*" method="DELETE" access="hasRole('ADMIN')"/>
+        <security:intercept-url pattern="/claims/**" access="isAuthenticated()"/>
+        
+        <!-- Dashboard Stats APIs -->
+        <security:intercept-url pattern="/dashboard/**" access="isAuthenticated()"/>
+        
+        <!-- Default: Require authentication for everything else -->
+        <security:intercept-url pattern="/**" access="isAuthenticated()"/>
+        
+        <!-- Disable CSRF for REST APIs -->
         <security:csrf disabled="true"/>
     </security:http>
     
-    <!-- JWT Authentication Filter Bean -->
+    <!-- ===== JWT SECURITY BEANS ===== -->
+    
+    <!-- JWT Authentication Filter -->
     <bean id="jwtFilter" class="com.example.security.JwtAuthenticationFilter"/>
+    
+    <!-- JWT Entry Point (handles 401 errors) -->
     <bean id="jwtAuthEntryPoint" class="com.example.security.JwtAuthEntryPoint"/>
     
+    <!-- Custom UserDetailsService -->
     <bean id="customUserDetailsService" class="com.example.security.CustomUserDetailsService"/>
     
+    <!-- BCrypt Password Encoder -->
     <bean id="passwordEncoder" class="org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder">
         <constructor-arg value="12"/>
     </bean>
     
-    <!-- Authentication manager -->
+    <!-- Authentication Manager -->
     <security:authentication-manager alias="authenticationManager">
         <security:authentication-provider user-service-ref="customUserDetailsService">
             <security:password-encoder ref="passwordEncoder"/>
         </security:authentication-provider>
-    </security:authentication-manager> 
+    </security:authentication-manager>
     
-    <!-- Enable Spring MVC annotations -->
-    <mvc:annotation-driven />
+    <!-- ===== SPRING MVC CONFIGURATION ===== -->
     
-    <!-- Serve static resources from /static/** -->
+    <!-- ✅ Custom ObjectMapper with JSR-310 support -->
+    <bean id="objectMapper" class="com.fasterxml.jackson.databind.ObjectMapper"/>
+    
+    <!-- ✅ Register JavaTimeModule for LocalDate/LocalDateTime support -->
+    <bean class="org.springframework.beans.factory.config.MethodInvokingFactoryBean">
+        <property name="targetObject" ref="objectMapper"/>
+        <property name="targetMethod" value="registerModule"/>
+        <property name="arguments">
+            <list>
+                <bean class="com.fasterxml.jackson.datatype.jsr310.JavaTimeModule"/>
+            </list>
+        </property>
+    </bean>
+    
+    <!-- ✅ Disable writing dates as timestamps (use ISO-8601 format) -->
+    <bean class="org.springframework.beans.factory.config.MethodInvokingFactoryBean">
+        <property name="targetObject" ref="objectMapper"/>
+        <property name="targetMethod" value="configure"/>
+        <property name="arguments">
+            <list>
+                <value type="com.fasterxml.jackson.databind.SerializationFeature">WRITE_DATES_AS_TIMESTAMPS</value>
+                <value>false</value>
+            </list>
+        </property>
+    </bean>
+    
+    <!-- ✅ Enable Spring MVC annotations with validation and custom ObjectMapper -->
+    <mvc:annotation-driven validator="validator">
+        <mvc:message-converters>
+            <!-- JSON message converter with JSR-310 support -->
+            <bean class="org.springframework.http.converter.json.MappingJackson2HttpMessageConverter">
+                <property name="objectMapper" ref="objectMapper"/>
+            </bean>
+            <!-- String message converter -->
+            <bean class="org.springframework.http.converter.StringHttpMessageConverter"/>
+        </mvc:message-converters>
+    </mvc:annotation-driven>
+    
+    <!-- ✅ Bean Validator for @Valid annotations -->
+    <bean id="validator" class="org.springframework.validation.beanvalidation.LocalValidatorFactoryBean"/>
+    
+    <!-- Serve static resources -->
     <mvc:resources mapping="/static/**" location="/static/" cache-period="31556926" />
+    <mvc:resources mapping="/css/**" location="/WEB-INF/views/css/" />
+    <mvc:resources mapping="/js/**" location="/WEB-INF/views/js/" />
+    <mvc:resources mapping="/images/**" location="/WEB-INF/views/images/" />
 
     <!-- Map simple pages without a controller -->
     <mvc:view-controller path="/" view-name="index" />
@@ -71,20 +166,29 @@
     <mvc:view-controller path="/admin-dashboard" view-name="AdminDashboard" />
     <mvc:view-controller path="/agent-dashboard" view-name="agent-dashboard" />
     <mvc:view-controller path="/customer-dashboard" view-name="customer-dashboard" />
-    <mvc:view-controller path="/policies" view-name="PolicyManagement" />
     <mvc:view-controller path="/policies-page" view-name="PolicyManagement" />
     <mvc:view-controller path="/claims" view-name="ClaimManagement" />
     <mvc:view-controller path="/file-claim" view-name="FileClaim" />
+    <mvc:view-controller path="/users-page" view-name="UserManagement" />
 
+    <!-- ===== DATABASE CONFIGURATION ===== -->
+    
     <!-- PostgreSQL DataSource -->
-    <bean id="dataSource" class="org.apache.commons.dbcp2.BasicDataSource">
+    <bean id="dataSource" class="org.apache.commons.dbcp2.BasicDataSource" destroy-method="close">
         <property name="driverClassName" value="org.postgresql.Driver" />
         <property name="url" value="jdbc:postgresql://localhost:5432/hims" />
         <property name="username" value="postgres" />
         <property name="password" value="rootroot" />
+        
+        <!-- Connection pool settings -->
+        <property name="initialSize" value="5" />
+        <property name="maxTotal" value="50" />
+        <property name="maxIdle" value="25" />
+        <property name="minIdle" value="5" />
+        <property name="maxWaitMillis" value="30000" />
     </bean>
 
-    <!-- JPA EntityManagerFactory (for @PersistenceContext based DAOs) -->
+    <!-- JPA EntityManagerFactory -->
     <bean id="entityManagerFactory" class="org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean">
         <property name="dataSource" ref="dataSource"/>
         <property name="packagesToScan" value="com.example.hims.entity"/>
@@ -98,6 +202,8 @@
         <property name="jpaProperties">
             <props>
                 <prop key="hibernate.hbm2ddl.auto">update</prop>
+                <prop key="hibernate.format_sql">true</prop>
+                <prop key="hibernate.jdbc.batch_size">20</prop>
             </props>
         </property>
     </bean>
@@ -108,12 +214,12 @@
         <property name="suffix" value=".jsp"/>
     </bean>
 
-    <!-- JPA Transaction Manager used for @PersistenceContext DAOs -->
+    <!-- JPA Transaction Manager -->
     <bean id="jpaTransactionManager" class="org.springframework.orm.jpa.JpaTransactionManager">
         <property name="entityManagerFactory" ref="entityManagerFactory"/>
     </bean>
 
-    <!-- Enable @Transactional annotations using JPA transaction manager -->
-    <tx:annotation-driven transaction-manager="jpaTransactionManager" />
+    <!-- Enable @Transactional annotations -->
+    <tx:annotation-driven transaction-manager="jpaTransactionManager" proxy-target-class="true"/>
 
 </beans>
