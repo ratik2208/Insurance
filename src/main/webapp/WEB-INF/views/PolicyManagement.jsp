@@ -111,6 +111,7 @@
     .form-group {
       display: flex;
       flex-direction: column;
+      position: relative;
     }
     .form-group label {
       margin-bottom: 5px;
@@ -128,6 +129,35 @@
       outline: none;
       border-color: #667eea;
     }
+    
+    /* ✅ Validation States */
+    .form-control.valid {
+      border-color: #27ae60;
+      background-color: #f0fff4;
+    }
+    .form-control.invalid {
+      border-color: #e74c3c;
+      background-color: #fff5f5;
+    }
+    
+    /* ✅ Validation Error Messages */
+    .field-error {
+      color: #e74c3c;
+      font-size: 12px;
+      margin-top: 4px;
+      display: none;
+      animation: fadeIn 0.3s ease;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(-5px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    
+    /* ✅ Required Indicator */
+    .required {
+      color: #e74c3c;
+    }
+    
     .policies-grid {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
@@ -233,37 +263,93 @@
       <div id="alertText"></div>
     </div>
 
-    <!-- Create Policy Modal -->
+    <!-- ✅ Enhanced Create Policy Modal with Validation -->
     <div id="createPolicyModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,.5); align-items:center; justify-content:center; z-index:1000;">
       <div style="background:#fff; padding:25px; border-radius:12px; width:95%; max-width:640px; box-shadow:0 10px 30px rgba(0,0,0,.2); max-height:90vh; overflow-y:auto;">
         <h3 style="margin-bottom:15px; color:#333;">Create New Policy</h3>
-        <form id="createPolicyForm">
+        <form id="createPolicyForm" novalidate>
           <div class="form-row" style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
+            
+            <!-- ✅ Policy Title with Validation -->
             <div class="form-group">
-              <label for="policyTitle">Title *</label>
-              <input type="text" id="policyTitle" class="form-control" required />
+              <label for="policyTitle">Title <span class="required">*</span></label>
+              <input type="text" 
+                     id="policyTitle" 
+                     class="form-control" 
+                     required 
+                     minlength="3"
+                     maxlength="200"
+                     placeholder="Enter policy title" />
+              <div class="field-error" id="policyTitleError">Title must be 3-200 characters</div>
             </div>
+            
+            <!-- ✅ Premium with Validation -->
             <div class="form-group">
-              <label for="policyPremium">Premium *</label>
-              <input type="number" step="0.01" id="policyPremium" class="form-control" required />
+              <label for="policyPremium">Premium <span class="required">*</span></label>
+              <input type="number" 
+                     step="0.01" 
+                     id="policyPremium" 
+                     class="form-control" 
+                     required 
+                     min="100"
+                     max="10000000"
+                     placeholder="Enter premium amount" />
+              <div class="field-error" id="policyPremiumError">Premium must be between 100 and 10,000,000</div>
             </div>
+            
+            <!-- ✅ Coverage Amount with Validation -->
             <div class="form-group">
-              <label for="coverageAmount">Coverage Amount *</label>
-              <input type="number" step="0.01" id="coverageAmount" class="form-control" required />
+              <label for="coverageAmount">Coverage Amount <span class="required">*</span></label>
+              <input type="number" 
+                     step="0.01" 
+                     id="coverageAmount" 
+                     class="form-control" 
+                     required 
+                     min="1000"
+                     max="100000000"
+                     placeholder="Enter coverage amount" />
+              <div class="field-error" id="coverageAmountError">Coverage must be between 1,000 and 100,000,000</div>
             </div>
+            
+            <!-- ✅ Term Months with Validation -->
             <div class="form-group">
-              <label for="termMonths">Term (months) *</label>
-              <input type="number" id="termMonths" class="form-control" required />
+              <label for="termMonths">Term (months) <span class="required">*</span></label>
+              <input type="number" 
+                     id="termMonths" 
+                     class="form-control" 
+                     required 
+                     min="1"
+                     max="360"
+                     placeholder="Enter term in months" />
+              <div class="field-error" id="termMonthsError">Term must be between 1 and 360 months</div>
             </div>
           </div>
+          
+          <!-- ✅ Eligibility Criteria (Optional) -->
           <div class="form-group" style="margin-top:12px;">
             <label for="eligibility">Eligibility Criteria</label>
-            <input type="text" id="eligibility" class="form-control" placeholder="e.g., Age 18-65, No pre-existing conditions" />
+            <input type="text" 
+                   id="eligibility" 
+                   class="form-control" 
+                   maxlength="500"
+                   placeholder="e.g., Age 18-65, No pre-existing conditions" />
+            <div class="field-error" id="eligibilityError">Maximum 500 characters allowed</div>
           </div>
+          
+          <!-- ✅ Description with Validation -->
           <div class="form-group" style="margin-top:12px;">
-            <label for="policyDescription">Description</label>
-            <textarea id="policyDescription" class="form-control" rows="3" placeholder="Enter policy description..."></textarea>
+            <label for="policyDescription">Description <span class="required">*</span></label>
+            <textarea id="policyDescription" 
+                      class="form-control" 
+                      rows="3" 
+                      required
+                      minlength="10"
+                      maxlength="1000"
+                      placeholder="Enter policy description..."></textarea>
+            <div class="field-error" id="policyDescriptionError">Description must be 10-1000 characters</div>
+            <small style="color:#999; font-size:11px;"><span id="descCount">0</span>/1000 characters</small>
           </div>
+          
           <div style="display:flex; gap:10px; justify-content:flex-end; margin-top:16px;">
             <button type="button" class="btn btn-secondary" onclick="closeCreatePolicyModal()">Cancel</button>
             <button type="submit" class="btn btn-primary">Create Policy</button>
@@ -307,6 +393,45 @@
     const API_BASE_URL = window.APP_CONTEXT || '${pageContext.request.contextPath}';
     let authToken = localStorage.getItem('token');
 
+    // ✅ Validation Rules
+    const POLICY_VALIDATION_RULES = {
+      policyTitle: {
+        required: true,
+        minLength: 3,
+        maxLength: 200,
+        message: 'Title must be 3-200 characters'
+      },
+      policyDescription: {
+        required: true,
+        minLength: 10,
+        maxLength: 1000,
+        message: 'Description must be 10-1000 characters'
+      },
+      coverageAmount: {
+        required: true,
+        min: 1000,
+        max: 100000000,
+        message: 'Coverage must be between 1,000 and 100,000,000'
+      },
+      policyPremium: {
+        required: true,
+        min: 100,
+        max: 10000000,
+        message: 'Premium must be between 100 and 10,000,000'
+      },
+      termMonths: {
+        required: true,
+        min: 1,
+        max: 360,
+        message: 'Term must be between 1 and 360 months'
+      },
+      eligibility: {
+        required: false,
+        maxLength: 500,
+        message: 'Maximum 500 characters allowed'
+      }
+    };
+
     // Check authentication
     if (!authToken) {
       window.location.href = API_BASE_URL + '/login';
@@ -332,23 +457,144 @@
     function closeCreatePolicyModal() { 
       $('#createPolicyModal').hide(); 
       $('#createPolicyForm')[0].reset();
+      // Clear validation states
+      $('.form-control').removeClass('valid invalid');
+      $('.field-error').hide();
+      $('#descCount').text('0');
     }
 
+    // ✅ Enhanced Field Validation
+    function validateField(fieldId, rules) {
+      const field = document.getElementById(fieldId);
+      const value = field.value.trim();
+      const errorDiv = document.getElementById(fieldId + 'Error');
+      
+      // Reset state
+      field.classList.remove('valid', 'invalid');
+      errorDiv.style.display = 'none';
+      
+      // Required check
+      if (rules.required && !value) {
+        field.classList.add('invalid');
+        errorDiv.textContent = rules.message || 'This field is required';
+        errorDiv.style.display = 'block';
+        return false;
+      }
+      
+      // For numeric fields
+      if (field.type === 'number' && value) {
+        const num = parseFloat(value);
+        
+        if (isNaN(num)) {
+          field.classList.add('invalid');
+          errorDiv.textContent = 'Please enter a valid number';
+          errorDiv.style.display = 'block';
+          return false;
+        }
+        
+        if (rules.min !== undefined && num < rules.min) {
+          field.classList.add('invalid');
+          errorDiv.textContent = rules.message;
+          errorDiv.style.display = 'block';
+          return false;
+        }
+        
+        if (rules.max !== undefined && num > rules.max) {
+          field.classList.add('invalid');
+          errorDiv.textContent = rules.message;
+          errorDiv.style.display = 'block';
+          return false;
+        }
+      }
+      
+      // For text fields
+      if ((field.type === 'text' || field.tagName === 'TEXTAREA') && value) {
+        if (rules.minLength && value.length < rules.minLength) {
+          field.classList.add('invalid');
+          errorDiv.textContent = rules.message;
+          errorDiv.style.display = 'block';
+          return false;
+        }
+        
+        if (rules.maxLength && value.length > rules.maxLength) {
+          field.classList.add('invalid');
+          errorDiv.textContent = rules.message;
+          errorDiv.style.display = 'block';
+          return false;
+        }
+      }
+      
+      // Valid state
+      if (value || !rules.required) {
+        field.classList.add('valid');
+      }
+      
+      return true;
+    }
+
+    // ✅ Validate Entire Form
+    function validatePolicyForm() {
+      let isValid = true;
+      
+      // Validate all required fields
+      if (!validateField('policyTitle', POLICY_VALIDATION_RULES.policyTitle)) isValid = false;
+      if (!validateField('policyDescription', POLICY_VALIDATION_RULES.policyDescription)) isValid = false;
+      if (!validateField('coverageAmount', POLICY_VALIDATION_RULES.coverageAmount)) isValid = false;
+      if (!validateField('policyPremium', POLICY_VALIDATION_RULES.policyPremium)) isValid = false;
+      if (!validateField('termMonths', POLICY_VALIDATION_RULES.termMonths)) isValid = false;
+      
+      // Validate optional eligibility field
+      const eligibility = $('#eligibility').val().trim();
+      if (eligibility && eligibility.length > 500) {
+        validateField('eligibility', POLICY_VALIDATION_RULES.eligibility);
+        isValid = false;
+      }
+      
+      return isValid;
+    }
+
+    // ✅ Character Counter for Description
+    $('#policyDescription').on('input', function() {
+      const count = $(this).val().length;
+      $('#descCount').text(count);
+      
+      if (count >= 10 && count <= 1000) {
+        validateField('policyDescription', POLICY_VALIDATION_RULES.policyDescription);
+      }
+    });
+
+    // ✅ Real-time Validation on Blur
+    $('#policyTitle').on('blur', function() {
+      if ($(this).val().trim()) {
+        validateField('policyTitle', POLICY_VALIDATION_RULES.policyTitle);
+      }
+    });
+
+    $('#coverageAmount, #policyPremium, #termMonths').on('blur', function() {
+      if ($(this).val()) {
+        const fieldId = $(this).attr('id');
+        validateField(fieldId, POLICY_VALIDATION_RULES[fieldId]);
+      }
+    });
+
+    // ✅ Enhanced Form Submission
     $('#createPolicyForm').on('submit', function(e) {
       e.preventDefault();
+      
+      // Validate form
+      if (!validatePolicyForm()) {
+        showAlert('Please fix all validation errors before submitting', 'error');
+        return;
+      }
+      
       const dto = {
         title: $('#policyTitle').val().trim(),
         description: $('#policyDescription').val().trim(),
         coverageAmount: parseFloat($('#coverageAmount').val()),
         premium: parseFloat($('#policyPremium').val()),
         termMonths: parseInt($('#termMonths').val(), 10),
-        eligibilityCriteria: $('#eligibility').val().trim()
+        eligibilityCriteria: $('#eligibility').val().trim() || null
       };
-
-      if (!dto.title || isNaN(dto.coverageAmount) || isNaN(dto.premium) || isNaN(dto.termMonths)) {
-        showAlert('Please fill all required fields correctly', 'error');
-        return;
-      }
 
       $.ajax({
         url: API_BASE_URL + '/policies',
@@ -383,7 +629,6 @@
         const card = document.createElement('div');
         card.className = 'policy-card';
         
-        // Build HTML string using JavaScript (not JSP EL with backticks)
         let detailsHTML = '<div class="policy-header">' +
           '<div class="policy-number">' + (p.policyNumber || 'N/A') + '</div>' +
           '<div class="policy-status ' + activeClass + '">' + activeText + '</div>' +
@@ -406,7 +651,6 @@
           '<span class="detail-value">' + (p.termMonths || '0') + ' months</span>' +
           '</div>';
         
-        // Conditional rendering in JavaScript (NOT JSP EL)
         if (p.eligibilityCriteria) {
           detailsHTML += '<div class="detail-row">' +
             '<span class="detail-label">Eligibility:</span>' +
@@ -421,8 +665,7 @@
             '</div>';
         }
         
-        detailsHTML += '</div>'; // Close policy-details
-        
+        detailsHTML += '</div>';
         card.innerHTML = detailsHTML;
         grid.appendChild(card);
       });

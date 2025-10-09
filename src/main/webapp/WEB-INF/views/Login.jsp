@@ -28,7 +28,7 @@
     .header { text-align:center; margin-bottom:30px; }
     .header h1 { color:#333; font-size:28px; font-weight:600; margin-bottom:10px; }
     .header p { color:#666; font-size:16px; }
-    .form-group { margin-bottom:25px; }
+    .form-group { margin-bottom:25px; position: relative; }
     .form-group label {
       display:block;
       margin-bottom:8px;
@@ -52,6 +52,28 @@
       box-shadow:0 0 0 3px rgba(102,126,234,.1);
     }
     .form-control:hover { border-color:#c1c1c1; }
+    
+    /* ✅ Validation States */
+    .form-control.valid {
+      border-color:#27ae60;
+      background-color:#f0fff4;
+    }
+    .form-control.invalid {
+      border-color:#e74c3c;
+      background-color:#fff5f5;
+    }
+    
+    /* ✅ Validation Icon */
+    .validation-icon {
+      position: absolute;
+      right: 15px;
+      top: 43px;
+      font-size: 18px;
+      display: none;
+    }
+    .validation-icon.valid { color: #27ae60; display: block; }
+    .validation-icon.invalid { color: #e74c3c; display: block; }
+    
     .submit-btn {
       width:100%;
       background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -99,6 +121,11 @@
       font-size:12px;
       margin-top:5px;
       display:none;
+      animation: fadeIn 0.3s ease;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(-5px); }
+      to { opacity: 1; transform: translateY(0); }
     }
     .required { color:#e74c3c; }
     .alert {
@@ -126,6 +153,14 @@
       from{opacity:0; transform: translateY(-20px)}
       to{opacity:1; transform: translateY(0)}
     }
+    
+    /* ✅ Helper Text */
+    .helper-text {
+      font-size: 11px;
+      color: #999;
+      margin-top: 4px;
+    }
+    
     @media (max-width:768px){
       .login-container { padding:20px; margin:10px; }
       .header h1 { font-size:24px; }
@@ -145,16 +180,35 @@
     </div>
 
     <form id="loginForm" novalidate>
+      <!-- ✅ Email Field with Validation -->
       <div class="form-group">
         <label for="email">Email Address <span class="required">*</span></label>
-        <input type="email" id="email" name="email" class="form-control" required />
-        <div class="error" id="emailError">Valid email is required</div>
+        <input type="email" 
+               id="email" 
+               name="email" 
+               class="form-control" 
+               required 
+               pattern="[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}"
+               autocomplete="email"
+               placeholder="Enter your email" />
+        <span class="validation-icon" id="emailIcon">✓</span>
+        <div class="error" id="emailError">Please enter a valid email address</div>
       </div>
 
+      <!-- ✅ Password Field with Validation -->
       <div class="form-group">
         <label for="password">Password <span class="required">*</span></label>
-        <input type="password" id="password" name="password" class="form-control" required />
-        <div class="error" id="passwordError">Password is required</div>
+        <input type="password" 
+               id="password" 
+               name="password" 
+               class="form-control" 
+               required 
+               minlength="6"
+               autocomplete="current-password"
+               placeholder="Enter your password" />
+        <span class="validation-icon" id="passwordIcon">✓</span>
+        <div class="error" id="passwordError">Password must be at least 6 characters</div>
+        <div class="helper-text">Minimum 6 characters required</div>
       </div>
 
       <button type="submit" class="submit-btn" id="submitBtn">
@@ -175,7 +229,21 @@
     window.APP_CONTEXT = API_BASE_URL;
     const LOGIN_ENDPOINT = API_BASE_URL + '/auth/login';
 
-    // ✅ Set cookie in frontend
+    // ✅ Validation Rules
+    const VALIDATION_RULES = {
+      email: {
+        required: true,
+        pattern: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+        message: 'Please enter a valid email address'
+      },
+      password: {
+        required: true,
+        minLength: 6,
+        message: 'Password must be at least 6 characters'
+      }
+    };
+
+    // ✅ Cookie Management
     function setCookie(name, value, days) {
       const d = new Date();
       d.setTime(d.getTime() + (days * 24 * 60 * 60 * 1000));
@@ -184,18 +252,17 @@
       document.cookie = name + "=" + encodeURIComponent(value) + ";" + expires + ";" + path;
     }
 
-    // ✅ Get cookie
     function getCookie(name) {
       const value = "; " + document.cookie;
       const parts = value.split("; " + name + "=");
       if (parts.length === 2) return parts.pop().split(";").shift();
     }
 
-    // ✅ Delete cookie (for logout)
     function deleteCookie(name) {
       document.cookie = name + "=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
     }
 
+    // ✅ Alert Functions
     function showAlert(message, type, autoClose = true) {
       const alertDiv = document.getElementById('alertMessage');
       const alertText = document.getElementById('alertText');
@@ -227,31 +294,72 @@
       }
     }
 
+    // ✅ Enhanced Field Validation
+    function validateField(fieldId, rules) {
+      const field = document.getElementById(fieldId);
+      const value = field.value.trim();
+      const errorDiv = document.getElementById(fieldId + 'Error');
+      const icon = document.getElementById(fieldId + 'Icon');
+      
+      // Reset state
+      field.classList.remove('valid', 'invalid');
+      icon.classList.remove('valid', 'invalid');
+      errorDiv.style.display = 'none';
+      
+      // Required check
+      if (rules.required && !value) {
+        field.classList.add('invalid');
+        icon.classList.add('invalid');
+        icon.textContent = '✗';
+        errorDiv.textContent = rules.message || 'This field is required';
+        errorDiv.style.display = 'block';
+        return false;
+      }
+      
+      // Min length check
+      if (rules.minLength && value.length > 0 && value.length < rules.minLength) {
+        field.classList.add('invalid');
+        icon.classList.add('invalid');
+        icon.textContent = '✗';
+        errorDiv.textContent = rules.message;
+        errorDiv.style.display = 'block';
+        return false;
+      }
+      
+      // Pattern check (email)
+      if (rules.pattern && value && !rules.pattern.test(value)) {
+        field.classList.add('invalid');
+        icon.classList.add('invalid');
+        icon.textContent = '✗';
+        errorDiv.textContent = rules.message;
+        errorDiv.style.display = 'block';
+        return false;
+      }
+      
+      // Valid state
+      if (value) {
+        field.classList.add('valid');
+        icon.classList.add('valid');
+        icon.textContent = '✓';
+      }
+      
+      return true;
+    }
+
+    // ✅ Validate Entire Form
     function validateForm() {
       let isValid = true;
-      document.querySelectorAll('.error').forEach(e => e.style.display = 'none');
-
-      document.querySelectorAll('input[required]').forEach(field => {
-        if (!field.value || !field.value.trim()) {
-          const err = document.getElementById(field.id + 'Error');
-          if (err) err.style.display = 'block';
-          field.style.borderColor = '#e74c3c';
-          isValid = false;
-        } else {
-          field.style.borderColor = '#e1e1e1';
-        }
-      });
-
-      const email = document.getElementById('email').value.trim();
-      const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (email && !emailPattern.test(email)) {
-        const err = document.getElementById('emailError');
-        err.textContent = 'Please enter a valid email address';
-        err.style.display = 'block';
-        document.getElementById('email').style.borderColor = '#e74c3c';
+      
+      // Validate email
+      if (!validateField('email', VALIDATION_RULES.email)) {
         isValid = false;
       }
-
+      
+      // Validate password
+      if (!validateField('password', VALIDATION_RULES.password)) {
+        isValid = false;
+      }
+      
       return isValid;
     }
 
@@ -269,10 +377,10 @@
         contentType: 'application/json',
         data: JSON.stringify(credentials),
         success: function (data) {
-          // ✅ Set JWT in cookie via frontend JavaScript
-          setCookie('jwt_token', data.token, 1); // expires in 1 day
+          // Set JWT in cookie
+          setCookie('jwt_token', data.token, 1);
 
-          // Optional: Also store in localStorage
+          // Store in localStorage
           localStorage.setItem('token', data.token);
           localStorage.setItem('userId', data.userId);
           localStorage.setItem('userRole', data.role);
@@ -314,7 +422,7 @@
       });
     }
 
-    // Event handlers
+    // ✅ Form Submit Handler
     $('#loginForm').on('submit', function (e) {
       e.preventDefault();
       closeAlert();
@@ -336,22 +444,28 @@
       }
     });
 
-    // Live validations
+    // ✅ Real-time Validation on Blur
     $('#email').on('blur', function () {
-      const email = $(this).val().trim();
-      const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      const errorDiv = $('#emailError');
-      if (email && !emailPattern.test(email)) {
-        errorDiv.text('Please enter a valid email address').show();
-        $(this).css('border-color', '#e74c3c');
-      } else if (email) {
-        errorDiv.hide();
-        $(this).css('border-color', '#27ae60');
-      } else {
-        $(this).css('border-color', '#e1e1e1');
+      if ($(this).val().trim()) {
+        validateField('email', VALIDATION_RULES.email);
       }
     });
 
+    $('#password').on('blur', function () {
+      if ($(this).val()) {
+        validateField('password', VALIDATION_RULES.password);
+      }
+    });
+
+    // ✅ Real-time Validation on Input (for password length)
+    $('#password').on('input', function () {
+      const value = $(this).val();
+      if (value.length > 0) {
+        validateField('password', VALIDATION_RULES.password);
+      }
+    });
+
+    // ✅ Clear validation on focus
     $('.form-control').on('focus', function () {
       $(this).css('border-color', '#667eea');
     });

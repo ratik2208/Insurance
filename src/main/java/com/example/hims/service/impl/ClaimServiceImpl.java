@@ -73,7 +73,7 @@ public class ClaimServiceImpl implements ClaimService {
         return toDto(c);
     }
 
-    // ✅ NEW: Get all claims (for agents and admins)
+    //  NEW: Get all claims (for agents and admins)
     @Override
     @Transactional(readOnly = true)
     public List<ClaimDTO> listClaims() {
@@ -82,7 +82,7 @@ public class ClaimServiceImpl implements ClaimService {
                 .collect(Collectors.toList());
     }
 
-    // ✅ NEW: Get specific claim by ID
+    //  NEW: Get specific claim by ID
     @Override
     @Transactional(readOnly = true)
     public ClaimDTO getClaim(Long id) {
@@ -157,7 +157,7 @@ public class ClaimServiceImpl implements ClaimService {
                 .collect(Collectors.toList());
     }
 
-    // ✅ UPDATED: Enhanced DTO mapping with all fields
+    //  UPDATED: Enhanced DTO mapping with all fields
     private ClaimDTO toDto(Claim c) {
         ClaimDTO dto = new ClaimDTO();
         dto.setId(c.getId());

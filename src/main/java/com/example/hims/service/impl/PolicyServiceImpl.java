@@ -123,7 +123,7 @@ public class PolicyServiceImpl implements PolicyService {
         dto.setEndDate(p.getEndDate());
         dto.setEligibilityCriteria(p.getEligibilityCriteria());
         
-        // ✅ Safe handling of createdBy
+        //  Safe handling of createdBy
         if (p.getCreatedBy() != null) {
             // Try getName() first, fallback to getEmail()
             String creatorName = p.getCreatedBy().getName();
@@ -133,7 +133,7 @@ public class PolicyServiceImpl implements PolicyService {
             dto.setCreatedBy(creatorName);
         }
         
-        // ✅ DEBUG: Log conversion
+        //  DEBUG: Log conversion
         System.out.println("Converting to DTO:");
         System.out.println("  Entity Title: " + p.getTitle());
         System.out.println("  DTO Title: " + dto.getTitle());

@@ -10,11 +10,11 @@
     * { margin:0; padding:0; box-sizing:border-box; }
     body {
       font-family: 'Arial', sans-serif;
-      
       min-height: 100vh;
       display: flex;
       align-items: center;
       justify-content: center;
+      padding: 20px 0;
     }
     .registration-container {
       background: #fff; border-radius: 15px; box-shadow: 0 20px 40px rgba(0,0,0,.1);
@@ -23,7 +23,7 @@
     .header { text-align:center; margin-bottom:30px; }
     .header h1 { color:#333; font-size:28px; font-weight:600; margin-bottom:10px; }
     .header p { color:#666; font-size:16px; }
-    .form-group { margin-bottom:25px; }
+    .form-group { margin-bottom:25px; position: relative; }
     .form-group label { display:block; margin-bottom:8px; color:#333; font-weight:500; font-size:14px; }
     .form-control {
       width:100%; padding:12px 15px; border:2px solid #e1e1e1; border-radius:8px; font-size:14px;
@@ -32,6 +32,45 @@
     .form-control:focus { outline:none; border-color:#667eea; background:#fff; box-shadow:0 0 0 3px rgba(102,126,234,.1); }
     .form-control:hover { border-color:#c1c1c1; }
     select.form-control { cursor:pointer; }
+    
+    /* ✅ Validation States */
+    .form-control.valid {
+      border-color:#27ae60;
+      background-color:#f0fff4;
+    }
+    .form-control.invalid {
+      border-color:#e74c3c;
+      background-color:#fff5f5;
+    }
+    
+    /* ✅ Validation Icon */
+    .validation-icon {
+      position: absolute;
+      right: 15px;
+      top: 43px;
+      font-size: 18px;
+      display: none;
+    }
+    .validation-icon.valid { color: #27ae60; display: block; }
+    .validation-icon.invalid { color: #e74c3c; display: block; }
+    
+    /* ✅ Password Strength Indicator */
+    .password-strength {
+      height: 4px;
+      background: #e1e1e1;
+      border-radius: 2px;
+      margin-top: 8px;
+      overflow: hidden;
+    }
+    .password-strength-bar {
+      height: 100%;
+      transition: all 0.3s ease;
+      width: 0;
+    }
+    .password-strength-bar.weak { background: #e74c3c; width: 33%; }
+    .password-strength-bar.medium { background: #f39c12; width: 66%; }
+    .password-strength-bar.strong { background: #27ae60; width: 100%; }
+    
     .form-row { display:flex; gap:20px; }
     .form-row .form-group { flex:1; }
     .submit-btn {
@@ -50,7 +89,17 @@
     .login-link { text-align:center; margin-top:25px; color:#666; }
     .login-link a { color:#667eea; text-decoration:none; font-weight:500; }
     .login-link a:hover { text-decoration:underline; }
-    .error { color:#e74c3c; font-size:12px; margin-top:5px; display:none; }
+    .error { 
+      color:#e74c3c; 
+      font-size:12px; 
+      margin-top:5px; 
+      display:none;
+      animation: fadeIn 0.3s ease;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(-5px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
     .required { color:#e74c3c; }
     .alert {
       padding:15px; margin-bottom:20px; border-radius:8px; display:none; animation: slideDown .3s ease-out; position:relative;
@@ -60,6 +109,14 @@
     .alert-close { position:absolute; right:10px; top:10px; cursor:pointer; font-size:18px; line-height:1; color:inherit; opacity:.7; }
     .alert-close:hover { opacity:1; }
     @keyframes slideDown { from{opacity:0; transform: translateY(-20px)} to{opacity:1; transform: translateY(0)} }
+    
+    /* ✅ Helper Text */
+    .helper-text {
+      font-size: 11px;
+      color: #999;
+      margin-top: 4px;
+    }
+    
     @media (max-width:768px){
       .registration-container { padding:20px; margin:10px; }
       .form-row { flex-direction:column; gap:0; }
@@ -81,31 +138,72 @@
 
     <form id="registrationForm" novalidate>
       <div class="form-row">
+        <!-- ✅ Name Field with Validation -->
         <div class="form-group">
           <label for="name">Full Name <span class="required">*</span></label>
-          <input type="text" id="name" name="name" class="form-control" required />
-          <div class="error" id="nameError">Full name is required</div>
+          <input type="text" 
+                 id="name" 
+                 name="name" 
+                 class="form-control" 
+                 required 
+                 minlength="2"
+                 maxlength="100"
+                 pattern="[A-Za-z\s]+"
+                 placeholder="Enter your full name" />
+          <span class="validation-icon" id="nameIcon">✓</span>
+          <div class="error" id="nameError">Name must be 2-100 characters (letters only)</div>
         </div>
+        
+        <!-- ✅ Email Field with Validation -->
         <div class="form-group">
           <label for="email">Email Address <span class="required">*</span></label>
-          <input type="email" id="email" name="email" class="form-control" required />
-          <div class="error" id="emailError">Valid email is required</div>
+          <input type="email" 
+                 id="email" 
+                 name="email" 
+                 class="form-control" 
+                 required 
+                 pattern="[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}"
+                 placeholder="Enter your email" />
+          <span class="validation-icon" id="emailIcon">✓</span>
+          <div class="error" id="emailError">Please enter a valid email address</div>
         </div>
       </div>
 
       <div class="form-row">
+        <!-- ✅ Password Field with Strength Indicator -->
         <div class="form-group">
           <label for="password">Password <span class="required">*</span></label>
-          <input type="password" id="password" name="password" class="form-control" required minlength="8" />
-          <div class="error" id="passwordError">Password must be at least 8 characters</div>
+          <input type="password" 
+                 id="password" 
+                 name="password" 
+                 class="form-control" 
+                 required 
+                 minlength="6"
+                 placeholder="Enter password" />
+          <span class="validation-icon" id="passwordIcon">✓</span>
+          <div class="password-strength">
+            <div class="password-strength-bar" id="strengthBar"></div>
+          </div>
+          <div class="error" id="passwordError">Password must be at least 6 characters</div>
+          <div class="helper-text">Use a mix of letters, numbers, and symbols for a strong password</div>
         </div>
+        
+        <!-- ✅ Confirm Password Field -->
         <div class="form-group">
           <label for="confirmPassword">Confirm Password <span class="required">*</span></label>
-          <input type="password" id="confirmPassword" name="confirmPassword" class="form-control" required />
+          <input type="password" 
+                 id="confirmPassword" 
+                 name="confirmPassword" 
+                 class="form-control" 
+                 required 
+                 minlength="6"
+                 placeholder="Re-enter password" />
+          <span class="validation-icon" id="confirmPasswordIcon">✓</span>
           <div class="error" id="confirmPasswordError">Passwords must match</div>
         </div>
       </div>
 
+      <!-- ✅ Role Selection -->
       <div class="form-group">
         <label for="role">Select Your Role <span class="required">*</span></label>
         <select id="role" name="role" class="form-control" required>
@@ -114,6 +212,7 @@
           <option value="AGENT">Insurance Agent</option>
           <option value="ADMIN">Administrator</option>
         </select>
+        <span class="validation-icon" id="roleIcon">✓</span>
         <div class="error" id="roleError">Please select a role</div>
       </div>
 
@@ -135,6 +234,37 @@
     window.APP_CONTEXT = API_BASE_URL;
     const REGISTRATION_ENDPOINT = API_BASE_URL + '/auth/register';
 
+    // ✅ Validation Rules
+    const VALIDATION_RULES = {
+      name: {
+        required: true,
+        minLength: 2,
+        maxLength: 100,
+        pattern: /^[A-Za-z\s]+$/,
+        message: 'Name must be 2-100 characters (letters only)'
+      },
+      email: {
+        required: true,
+        pattern: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+        message: 'Please enter a valid email address'
+      },
+      password: {
+        required: true,
+        minLength: 6,
+        message: 'Password must be at least 6 characters'
+      },
+      confirmPassword: {
+        required: true,
+        match: 'password',
+        message: 'Passwords must match'
+      },
+      role: {
+        required: true,
+        message: 'Please select a role'
+      }
+    };
+
+    // ✅ Alert Functions
     function showAlert(message, type, autoClose = true) {
       const alertDiv = document.getElementById('alertMessage');
       const alertText = document.getElementById('alertText');
@@ -166,49 +296,119 @@
       }
     }
 
+    // ✅ Password Strength Calculator
+    function calculatePasswordStrength(password) {
+      let strength = 0;
+      if (password.length >= 6) strength++;
+      if (password.length >= 10) strength++;
+      if (/[a-z]/.test(password) && /[A-Z]/.test(password)) strength++;
+      if (/\d/.test(password)) strength++;
+      if (/[^a-zA-Z0-9]/.test(password)) strength++;
+      
+      return strength;
+    }
+
+    function updatePasswordStrength(password) {
+      const strengthBar = document.getElementById('strengthBar');
+      const strength = calculatePasswordStrength(password);
+      
+      strengthBar.className = 'password-strength-bar';
+      
+      if (strength <= 2) {
+        strengthBar.classList.add('weak');
+      } else if (strength <= 3) {
+        strengthBar.classList.add('medium');
+      } else {
+        strengthBar.classList.add('strong');
+      }
+    }
+
+    // ✅ Enhanced Field Validation
+    function validateField(fieldId, rules) {
+      const field = document.getElementById(fieldId);
+      const value = field.value.trim();
+      const errorDiv = document.getElementById(fieldId + 'Error');
+      const icon = document.getElementById(fieldId + 'Icon');
+      
+      // Reset state
+      field.classList.remove('valid', 'invalid');
+      icon.classList.remove('valid', 'invalid');
+      errorDiv.style.display = 'none';
+      
+      // Required check
+      if (rules.required && !value) {
+        field.classList.add('invalid');
+        icon.classList.add('invalid');
+        icon.textContent = '✗';
+        errorDiv.textContent = rules.message || 'This field is required';
+        errorDiv.style.display = 'block';
+        return false;
+      }
+      
+      // Min length check
+      if (rules.minLength && value && value.length < rules.minLength) {
+        field.classList.add('invalid');
+        icon.classList.add('invalid');
+        icon.textContent = '✗';
+        errorDiv.textContent = rules.message;
+        errorDiv.style.display = 'block';
+        return false;
+      }
+      
+      // Max length check
+      if (rules.maxLength && value && value.length > rules.maxLength) {
+        field.classList.add('invalid');
+        icon.classList.add('invalid');
+        icon.textContent = '✗';
+        errorDiv.textContent = rules.message;
+        errorDiv.style.display = 'block';
+        return false;
+      }
+      
+      // Pattern check
+      if (rules.pattern && value && !rules.pattern.test(value)) {
+        field.classList.add('invalid');
+        icon.classList.add('invalid');
+        icon.textContent = '✗';
+        errorDiv.textContent = rules.message;
+        errorDiv.style.display = 'block';
+        return false;
+      }
+      
+      // Match check (for confirm password)
+      if (rules.match && value) {
+        const matchField = document.getElementById(rules.match);
+        if (value !== matchField.value) {
+          field.classList.add('invalid');
+          icon.classList.add('invalid');
+          icon.textContent = '✗';
+          errorDiv.textContent = rules.message;
+          errorDiv.style.display = 'block';
+          return false;
+        }
+      }
+      
+      // Valid state
+      if (value) {
+        field.classList.add('valid');
+        icon.classList.add('valid');
+        icon.textContent = '✓';
+      }
+      
+      return true;
+    }
+
+    // ✅ Validate Entire Form
     function validateForm() {
       let isValid = true;
-
-      // Hide old errors
-      document.querySelectorAll('.error').forEach(e => e.style.display = 'none');
-
-      // Check required fields
-      document.querySelectorAll('input[required], select[required]').forEach(field => {
-        if (!field.value || !field.value.trim()) {
-          const err = document.getElementById(field.id + 'Error');
-          if (err) err.style.display = 'block';
-          field.style.borderColor = '#e74c3c';
-          isValid = false;
-        } else {
-          field.style.borderColor = '#e1e1e1';
-        }
-      });
-
-      // Password rules
-      const password = document.getElementById('password').value;
-      const confirmPassword = document.getElementById('confirmPassword').value;
-      if (password.length < 8) {
-        document.getElementById('passwordError').style.display = 'block';
-        document.getElementById('password').style.borderColor = '#e74c3c';
-        isValid = false;
-      }
-      if (password !== confirmPassword) {
-        document.getElementById('confirmPasswordError').style.display = 'block';
-        document.getElementById('confirmPassword').style.borderColor = '#e74c3c';
-        isValid = false;
-      }
-
-      // Email format
-      const email = document.getElementById('email').value.trim();
-      const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (email && !emailPattern.test(email)) {
-        const err = document.getElementById('emailError');
-        err.textContent = 'Please enter a valid email address';
-        err.style.display = 'block';
-        document.getElementById('email').style.borderColor = '#e74c3c';
-        isValid = false;
-      }
-
+      
+      // Validate all fields
+      if (!validateField('name', VALIDATION_RULES.name)) isValid = false;
+      if (!validateField('email', VALIDATION_RULES.email)) isValid = false;
+      if (!validateField('password', VALIDATION_RULES.password)) isValid = false;
+      if (!validateField('confirmPassword', VALIDATION_RULES.confirmPassword)) isValid = false;
+      if (!validateField('role', VALIDATION_RULES.role)) isValid = false;
+      
       return isValid;
     }
 
@@ -236,7 +436,7 @@
           if (json.error) return json.error;
         }
       } catch (e) {
-        // fall through to raw text
+        // fall through
       }
       return xhr.responseText || 'Registration failed. Please try again.';
     }
@@ -247,31 +447,22 @@
         type: 'POST',
         contentType: 'application/json',
         data: JSON.stringify(payload),
-        success: function (data, textStatus, xhr) {
+        success: function (data) {
           showAlert('Registration successful! Redirecting to login page...', 'success');
-          // Reset form
           $('#registrationForm')[0].reset();
 
           setTimeout(function () {
             window.location.href = API_BASE_URL + '/login';
           }, 1500);
         },
-        error: function (xhr, status, error) {
-          console.group('AJAX Registration Error Debug');
-          console.log('HTTP Status Code:', xhr.status);
-          console.log('jQuery Status Text:', status);
-          console.log('Error Thrown:', error);
-          console.log('Response Content-Type:', xhr.getResponseHeader('Content-Type'));
-          console.log('Raw Response Body:', xhr.responseText);
-          console.groupEnd();
-
+        error: function (xhr) {
           let msg = 'Registration failed. Please try again.';
           if (xhr.status === 0) {
-            msg = 'Unable to connect to server. Please ensure it is running at ' + API_BASE_URL;
+            msg = 'Unable to connect to server.';
           } else if (xhr.status === 400) {
-            msg = parseSpringErrors(xhr) || 'Invalid data provided. Please check your input.';
+            msg = parseSpringErrors(xhr) || 'Invalid data provided.';
           } else if (xhr.status === 409) {
-            msg = 'Email already exists. Please use a different email address.';
+            msg = 'Email already exists. Please use a different email.';
           } else if (xhr.status >= 500) {
             msg = 'Server error. Please try again later.';
           } else {
@@ -283,7 +474,7 @@
       });
     }
 
-    // Event handlers
+    // ✅ Form Submit Handler
     $('#registrationForm').on('submit', function (e) {
       e.preventDefault();
       closeAlert();
@@ -305,48 +496,35 @@
       }
     });
 
-    // Live validations
-    $('#confirmPassword').on('input', function () {
-      const password = $('#password').val();
-      const confirmPassword = $(this).val();
-      const errorDiv = $('#confirmPasswordError');
-      if (password !== confirmPassword) {
-        errorDiv.show();
-        $(this).css('border-color', '#e74c3c');
-      } else {
-        errorDiv.hide();
-        $(this).css('border-color', '#27ae60');
+    // ✅ Real-time Validation
+    $('#name').on('blur', function() {
+      if ($(this).val().trim()) {
+        validateField('name', VALIDATION_RULES.name);
       }
     });
 
-    $('#email').on('blur', function () {
-      const email = $(this).val().trim();
-      const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      const errorDiv = $('#emailError');
-      if (email && !emailPattern.test(email)) {
-        errorDiv.text('Please enter a valid email address').show();
-        $(this).css('border-color', '#e74c3c');
-      } else if (email) {
-        errorDiv.hide();
-        $(this).css('border-color', '#27ae60');
-      } else {
-        $(this).css('border-color', '#e1e1e1');
+    $('#email').on('blur', function() {
+      if ($(this).val().trim()) {
+        validateField('email', VALIDATION_RULES.email);
       }
     });
 
-    $('#password').on('input', function () {
+    $('#password').on('input', function() {
       const password = $(this).val();
-      const errorDiv = $('#passwordError');
-      if (password.length > 0 && password.length < 8) {
-        errorDiv.show();
-        $(this).css('border-color', '#e74c3c');
-      } else if (password.length >= 8) {
-        errorDiv.hide();
-        $(this).css('border-color', '#27ae60');
-      } else {
-        errorDiv.hide();
-        $(this).css('border-color', '#e1e1e1');
+      if (password) {
+        updatePasswordStrength(password);
+        validateField('password', VALIDATION_RULES.password);
       }
+    });
+
+    $('#confirmPassword').on('input', function() {
+      if ($(this).val()) {
+        validateField('confirmPassword', VALIDATION_RULES.confirmPassword);
+      }
+    });
+
+    $('#role').on('change', function() {
+      validateField('role', VALIDATION_RULES.role);
     });
 
     $('.form-control').on('focus', function () {
@@ -359,3 +537,4 @@
   </script>
 </body>
 </html>
+

@@ -32,7 +32,7 @@ public class ClaimController {
         this.userService = userService;
     }
 
-    // ✅ File a new claim (Customer only)
+    //  File a new claim (Customer only)
     @PostMapping
     @PreAuthorize("hasRole('CUSTOMER')")
     public ResponseEntity<?> fileClaim(@Valid @RequestBody ClaimCreateDTO dto, BindingResult result, Principal principal) {
@@ -50,7 +50,7 @@ public class ClaimController {
         return ResponseEntity.status(201).body(created);
     }
 
-    // ✅ Get ALL claims (Admin and Agent can see all claims)
+    //  Get ALL claims (Admin and Agent can see all claims)
     @GetMapping
     @PreAuthorize("hasAnyRole('ADMIN', 'AGENT')")
     public ResponseEntity<List<ClaimDTO>> getAllClaims() {
@@ -58,7 +58,7 @@ public class ClaimController {
         return ResponseEntity.ok(claims);
     }
 
-    // ✅ Get customer's own claims (Customer only)
+    //  Get customer's own claims (Customer only)
     @GetMapping("/my")
     @PreAuthorize("hasRole('CUSTOMER')")
     public List<ClaimDTO> myClaims(Principal principal) {
@@ -66,7 +66,7 @@ public class ClaimController {
         return claimService.findByCustomer(custId);
     }
 
-    // ✅ Get specific claim by ID (All authenticated users)
+    // Get specific claim by ID (All authenticated users)
     @GetMapping("/{id}")
     @PreAuthorize("hasAnyRole('ADMIN', 'AGENT', 'CUSTOMER')")
     public ResponseEntity<ClaimDTO> getClaim(@PathVariable Long id) {
@@ -79,7 +79,7 @@ public class ClaimController {
         return ResponseEntity.ok(claim);
     }
 
-    // ✅ Get claims for a specific policy
+    //  Get claims for a specific policy
     @GetMapping("/policy/{policyId}")
     @PreAuthorize("hasAnyRole('ADMIN', 'AGENT')")
     public List<ClaimDTO> claimsForPolicy(@PathVariable Long policyId) {
@@ -95,7 +95,7 @@ public class ClaimController {
         return claimService.search(q, status);
     }
 
-    // ✅ Decide on a claim (Admin and Agent only)
+    //  Decide on a claim (Admin and Agent only)
     @PutMapping("/{claimId}/decide")
     @PreAuthorize("hasAnyRole('ADMIN', 'AGENT')")
     public ResponseEntity<?> decideClaim(@PathVariable Long claimId,
@@ -114,7 +114,7 @@ public class ClaimController {
         return ResponseEntity.ok(updated);
     }
 
-    // ✅ LEGACY ENDPOINT: Keep for backward compatibility
+    // LEGACY ENDPOINT: Keep for backward compatibility
     @PutMapping("/{claimId}/decision")
     @PreAuthorize("hasAnyRole('ADMIN', 'AGENT')")
     public ResponseEntity<?> decideClaimLegacy(@PathVariable Long claimId,

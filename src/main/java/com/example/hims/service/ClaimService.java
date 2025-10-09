@@ -7,7 +7,7 @@ import java.util.List;
 public interface ClaimService {
     ClaimDTO fileClaim(Long customerId, ClaimCreateDTO dto);
     
-    // ✅ NEW methods
+    //  NEW methods
     List<ClaimDTO> listClaims();      // Get all claims
     ClaimDTO getClaim(Long id);        // Get specific claim
     

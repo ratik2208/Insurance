@@ -68,6 +68,7 @@
     }
     .form-group {
       margin-bottom: 25px;
+      position: relative;
     }
     .form-group label {
       display: block;
@@ -101,6 +102,28 @@
       resize: vertical;
       min-height: 100px;
     }
+    
+    /* ✅ Validation States */
+    .form-control.valid {
+      border-color: #27ae60;
+      background-color: #f0fff4;
+    }
+    .form-control.invalid {
+      border-color: #e74c3c;
+      background-color: #fff5f5;
+    }
+    
+    /* ✅ Validation Icon */
+    .validation-icon {
+      position: absolute;
+      right: 15px;
+      top: 43px;
+      font-size: 18px;
+      display: none;
+    }
+    .validation-icon.valid { color: #27ae60; display: block; }
+    .validation-icon.invalid { color: #e74c3c; display: block; }
+    
     .form-row {
       display: flex;
       gap: 20px;
@@ -156,6 +179,11 @@
       font-size: 12px;
       margin-top: 5px;
       display: none;
+      animation: fadeIn 0.3s ease;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(-5px); }
+      to { opacity: 1; transform: translateY(0); }
     }
     .required {
       color: #e74c3c;
@@ -195,6 +223,14 @@
       from { opacity: 0; transform: translateY(-20px); }
       to { opacity: 1; transform: translateY(0); }
     }
+    
+    /* ✅ Helper Text */
+    .helper-text {
+      font-size: 11px;
+      color: #999;
+      margin-top: 4px;
+    }
+    
     @media (max-width: 768px) {
       .form-container { padding: 20px; }
       .form-row { flex-direction: column; gap: 0; }
@@ -224,36 +260,65 @@
 
       <form id="claimForm" novalidate>
         <div class="form-row">
+          
+          <!-- ✅ Policy Selection with Validation -->
           <div class="form-group">
             <label for="policyId">Select Policy <span class="required">*</span></label>
-            <select id="policyId" name="policyId" class="form-control" required>
+            <select id="policyId" 
+                    name="policyId" 
+                    class="form-control" 
+                    required>
               <option value="">Choose your policy...</option>
-              <option value="1">POL-2025-0001 - Comprehensive Health Insurance</option>
-              <option value="2">POL-2025-0002 - Family Health Plan</option>
             </select>
+            <span class="validation-icon" id="policyIdIcon">✓</span>
             <div class="error" id="policyIdError">Please select a policy</div>
           </div>
+          
+          <!-- ✅ Claim Amount with Validation -->
           <div class="form-group">
             <label for="amountClaimed">Claim Amount <span class="required">*</span></label>
-            <input type="number" id="amountClaimed" name="amountClaimed" class="form-control" 
-                   placeholder="0.00" step="0.01" min="0" required />
-            <div class="error" id="amountClaimedError">Please enter a valid amount</div>
+            <input type="number" 
+                   id="amountClaimed" 
+                   name="amountClaimed" 
+                   class="form-control" 
+                   placeholder="0.00" 
+                   step="0.01" 
+                   min="100" 
+                   max="100000000"
+                   required />
+            <span class="validation-icon" id="amountClaimedIcon">✓</span>
+            <div class="error" id="amountClaimedError">Amount must be between 100 and 100,000,000</div>
           </div>
         </div>
 
+        <!-- ✅ Supporting Document URL with Validation -->
         <div class="form-group">
           <label for="supportingDocumentUrl">Supporting Document URL</label>
-          <input type="url" id="supportingDocumentUrl" name="supportingDocumentUrl" 
-                 class="form-control" placeholder="https://example.com/document.pdf" />
-          <div class="error" id="supportingDocumentUrlError">Please enter a valid URL</div>
+          <input type="url" 
+                 id="supportingDocumentUrl" 
+                 name="supportingDocumentUrl" 
+                 class="form-control" 
+                 maxlength="500"
+                 placeholder="https://example.com/document.pdf" />
+          <span class="validation-icon" id="supportingDocumentUrlIcon">✓</span>
+          <div class="error" id="supportingDocumentUrlError">Please enter a valid URL (max 500 characters)</div>
+          <div class="helper-text">Optional: Link to medical bills, receipts, or other supporting documents</div>
         </div>
 
+        <!-- ✅ Remarks with Validation -->
         <div class="form-group">
           <label for="remarks">Claim Description <span class="required">*</span></label>
-          <textarea id="remarks" name="remarks" class="form-control" 
+          <textarea id="remarks" 
+                    name="remarks" 
+                    class="form-control" 
                     placeholder="Please describe the incident, medical treatment, or reason for the claim..." 
-                    rows="4" required></textarea>
-          <div class="error" id="remarksError">Please provide a description</div>
+                    rows="4" 
+                    required
+                    minlength="10"
+                    maxlength="1000"></textarea>
+          <span class="validation-icon" id="remarksIcon" style="top:53px;">✓</span>
+          <div class="error" id="remarksError">Description must be 10-1000 characters</div>
+          <small class="helper-text"><span id="remarksCount">0</span>/1000 characters</small>
         </div>
 
         <button type="submit" class="submit-btn" id="submitBtn">
@@ -268,6 +333,32 @@
   <script>
     const API_BASE_URL = window.APP_CONTEXT || '${pageContext.request.contextPath}';
     let authToken = localStorage.getItem('token');
+
+    // ✅ Validation Rules
+    const CLAIM_VALIDATION_RULES = {
+      policyId: {
+        required: true,
+        message: 'Please select a policy'
+      },
+      amountClaimed: {
+        required: true,
+        min: 100,
+        max: 100000000,
+        message: 'Amount must be between 100 and 100,000,000'
+      },
+      supportingDocumentUrl: {
+        required: false,
+        maxLength: 500,
+        pattern: /^https?:\/\/.+/,
+        message: 'Please enter a valid URL (max 500 characters)'
+      },
+      remarks: {
+        required: true,
+        minLength: 10,
+        maxLength: 1000,
+        message: 'Description must be 10-1000 characters'
+      }
+    };
 
     function showAlert(message, type, autoClose = true) {
       const alertDiv = document.getElementById('alertMessage');
@@ -300,50 +391,139 @@
       }
     }
 
-    function validateForm() {
-      let isValid = true;
-
-      // Hide old errors
-      document.querySelectorAll('.error').forEach(e => e.style.display = 'none');
-
-      // Check required fields
-      document.querySelectorAll('input[required], select[required], textarea[required]').forEach(field => {
-        if (!field.value || !field.value.trim()) {
-          const err = document.getElementById(field.id + 'Error');
-          if (err) err.style.display = 'block';
-          field.style.borderColor = '#e74c3c';
-          isValid = false;
-        } else {
-          field.style.borderColor = '#e1e1e1';
+    // ✅ Enhanced Field Validation
+    function validateField(fieldId, rules) {
+      const field = document.getElementById(fieldId);
+      const value = field.value.trim();
+      const errorDiv = document.getElementById(fieldId + 'Error');
+      const icon = document.getElementById(fieldId + 'Icon');
+      
+      // Reset state
+      field.classList.remove('valid', 'invalid');
+      if (icon) {
+        icon.classList.remove('valid', 'invalid');
+      }
+      errorDiv.style.display = 'none';
+      
+      // Required check
+      if (rules.required && !value) {
+        field.classList.add('invalid');
+        if (icon) {
+          icon.classList.add('invalid');
+          icon.textContent = '✗';
         }
-      });
-
-      // Amount validation
-      const amount = parseFloat(document.getElementById('amountClaimed').value);
-      if (amount <= 0) {
-        document.getElementById('amountClaimedError').style.display = 'block';
-        document.getElementById('amountClaimed').style.borderColor = '#e74c3c';
-        isValid = false;
-      }
-
-      // URL validation
-      const url = document.getElementById('supportingDocumentUrl').value.trim();
-      if (url && !isValidUrl(url)) {
-        document.getElementById('supportingDocumentUrlError').style.display = 'block';
-        document.getElementById('supportingDocumentUrl').style.borderColor = '#e74c3c';
-        isValid = false;
-      }
-
-      return isValid;
-    }
-
-    function isValidUrl(string) {
-      try {
-        new URL(string);
-        return true;
-      } catch (_) {
+        errorDiv.textContent = rules.message || 'This field is required';
+        errorDiv.style.display = 'block';
         return false;
       }
+      
+      // Numeric validation
+      if (field.type === 'number' && value) {
+        const num = parseFloat(value);
+        
+        if (isNaN(num)) {
+          field.classList.add('invalid');
+          if (icon) {
+            icon.classList.add('invalid');
+            icon.textContent = '✗';
+          }
+          errorDiv.textContent = 'Please enter a valid number';
+          errorDiv.style.display = 'block';
+          return false;
+        }
+        
+        if (rules.min !== undefined && num < rules.min) {
+          field.classList.add('invalid');
+          if (icon) {
+            icon.classList.add('invalid');
+            icon.textContent = '✗';
+          }
+          errorDiv.textContent = rules.message;
+          errorDiv.style.display = 'block';
+          return false;
+        }
+        
+        if (rules.max !== undefined && num > rules.max) {
+          field.classList.add('invalid');
+          if (icon) {
+            icon.classList.add('invalid');
+            icon.textContent = '✗';
+          }
+          errorDiv.textContent = rules.message;
+          errorDiv.style.display = 'block';
+          return false;
+        }
+      }
+      
+      // Text length validation
+      if ((field.type === 'text' || field.type === 'url' || field.tagName === 'TEXTAREA') && value) {
+        if (rules.minLength && value.length < rules.minLength) {
+          field.classList.add('invalid');
+          if (icon) {
+            icon.classList.add('invalid');
+            icon.textContent = '✗';
+          }
+          errorDiv.textContent = rules.message;
+          errorDiv.style.display = 'block';
+          return false;
+        }
+        
+        if (rules.maxLength && value.length > rules.maxLength) {
+          field.classList.add('invalid');
+          if (icon) {
+            icon.classList.add('invalid');
+            icon.textContent = '✗';
+          }
+          errorDiv.textContent = rules.message;
+          errorDiv.style.display = 'block';
+          return false;
+        }
+      }
+      
+      // URL pattern validation
+      if (field.type === 'url' && value && rules.pattern) {
+        if (!rules.pattern.test(value)) {
+          field.classList.add('invalid');
+          if (icon) {
+            icon.classList.add('invalid');
+            icon.textContent = '✗';
+          }
+          errorDiv.textContent = rules.message;
+          errorDiv.style.display = 'block';
+          return false;
+        }
+      }
+      
+      // Valid state
+      if (value || !rules.required) {
+        field.classList.add('valid');
+        if (icon) {
+          icon.classList.add('valid');
+          icon.textContent = '✓';
+        }
+      }
+      
+      return true;
+    }
+
+    // ✅ Validate Entire Form
+    function validateForm() {
+      let isValid = true;
+      
+      // Validate all fields
+      if (!validateField('policyId', CLAIM_VALIDATION_RULES.policyId)) isValid = false;
+      if (!validateField('amountClaimed', CLAIM_VALIDATION_RULES.amountClaimed)) isValid = false;
+      if (!validateField('remarks', CLAIM_VALIDATION_RULES.remarks)) isValid = false;
+      
+      // Validate optional URL field
+      const url = $('#supportingDocumentUrl').val().trim();
+      if (url) {
+        if (!validateField('supportingDocumentUrl', CLAIM_VALIDATION_RULES.supportingDocumentUrl)) {
+          isValid = false;
+        }
+      }
+      
+      return isValid;
     }
 
     function collectFormData() {
@@ -364,29 +544,21 @@
           'Authorization': 'Bearer ' + authToken
         },
         data: JSON.stringify(claimData),
-        success: function (data, textStatus, xhr) {
+        success: function (data) {
           showAlert('Claim submitted successfully! Redirecting to dashboard...', 'success');
           setTimeout(function () {
-            window.location.href = '/hims/customer-dashboard';
+            window.location.href = API_BASE_URL + '/customer-dashboard';
           }, 1500);
         },
-        error: function (xhr, status, error) {
-          console.group('AJAX Claim Submission Error Debug');
-          console.log('HTTP Status Code:', xhr.status);
-          console.log('jQuery Status Text:', status);
-          console.log('Error Thrown:', error);
-          console.log('Response Content-Type:', xhr.getResponseHeader('Content-Type'));
-          console.log('Raw Response Body:', xhr.responseText);
-          console.groupEnd();
-
+        error: function (xhr) {
           let msg = 'Claim submission failed. Please try again.';
           if (xhr.status === 0) {
-            msg = 'Unable to connect to server. Please ensure it is running at ' + API_BASE_URL;
+            msg = 'Unable to connect to server.';
           } else if (xhr.status === 400) {
             msg = 'Invalid claim data. Please check your input.';
           } else if (xhr.status === 401) {
             msg = 'Authentication required. Please log in again.';
-            setTimeout(() => { window.location.href = '/hims/login'; }, 2000);
+            setTimeout(() => { window.location.href = API_BASE_URL + '/login'; }, 2000);
           } else if (xhr.status >= 500) {
             msg = 'Server error. Please try again later.';
           } else {
@@ -405,7 +577,40 @@
       });
     }
 
-    // Event handlers
+    // ✅ Character Counter for Remarks
+    $('#remarks').on('input', function() {
+      const count = $(this).val().length;
+      $('#remarksCount').text(count);
+      
+      if (count >= 10 && count <= 1000) {
+        validateField('remarks', CLAIM_VALIDATION_RULES.remarks);
+      }
+    });
+
+    // ✅ Real-time Validation on Blur
+    $('#policyId').on('change', function() {
+      validateField('policyId', CLAIM_VALIDATION_RULES.policyId);
+    });
+
+    $('#amountClaimed').on('blur', function() {
+      if ($(this).val()) {
+        validateField('amountClaimed', CLAIM_VALIDATION_RULES.amountClaimed);
+      }
+    });
+
+    $('#supportingDocumentUrl').on('blur', function() {
+      const url = $(this).val().trim();
+      if (url) {
+        validateField('supportingDocumentUrl', CLAIM_VALIDATION_RULES.supportingDocumentUrl);
+      } else {
+        // Clear validation state if empty (optional field)
+        $(this).removeClass('valid invalid');
+        $('#supportingDocumentUrlIcon').removeClass('valid invalid');
+        $('#supportingDocumentUrlError').hide();
+      }
+    });
+
+    // ✅ Enhanced Form Submission
     $('#claimForm').on('submit', function (e) {
       e.preventDefault();
       closeAlert();
@@ -427,43 +632,40 @@
       }
     });
 
-    // Live validations
-    $('#amountClaimed').on('input', function () {
-      const amount = parseFloat($(this).val());
-      const errorDiv = $('#amountClaimedError');
-      if (amount > 0) {
-        errorDiv.hide();
-        $(this).css('border-color', '#27ae60');
-      } else if ($(this).val() !== '') {
-        errorDiv.show();
-        $(this).css('border-color', '#e74c3c');
-      } else {
-        errorDiv.hide();
-        $(this).css('border-color', '#e1e1e1');
-      }
-    });
-
-    $('#supportingDocumentUrl').on('blur', function () {
-      const url = $(this).val().trim();
-      const errorDiv = $('#supportingDocumentUrlError');
-      if (url && !isValidUrl(url)) {
-        errorDiv.show();
-        $(this).css('border-color', '#e74c3c');
-      } else if (url) {
-        errorDiv.hide();
-        $(this).css('border-color', '#27ae60');
-      } else {
-        errorDiv.hide();
-        $(this).css('border-color', '#e1e1e1');
-      }
-    });
-
     $('.form-control').on('focus', function () {
       $(this).css('border-color', '#667eea');
     });
 
+    // ✅ Load Policies on Page Load
     $(document).ready(function () {
       setLoadingState(false);
+      
+      // Load customer policies
+      $.ajax({
+        url: API_BASE_URL + '/policies',
+        method: 'GET',
+        headers: { 'Authorization': 'Bearer ' + authToken },
+        success: function(policies) {
+          const select = $('#policyId');
+          select.empty().append('<option value="">Choose your policy...</option>');
+          
+          if (policies && policies.length > 0) {
+            policies.forEach(policy => {
+              if (policy.active) {
+                select.append('<option value="' + policy.id + '">' + 
+                  policy.policyNumber + ' - ' + policy.title + 
+                  ' (Coverage: $' + policy.coverageAmount.toLocaleString() + ')' +
+                  '</option>');
+              }
+            });
+          } else {
+            select.append('<option value="" disabled>No active policies found</option>');
+          }
+        },
+        error: function() {
+          showAlert('Failed to load policies', 'error');
+        }
+      });
     });
   </script>
 </body>
